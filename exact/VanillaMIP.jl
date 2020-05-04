@@ -1,5 +1,5 @@
 """
-    VanillaMIP(optimizer)
+    VanillaMIP(optimizer, m, time_limit)
 
 This formulates the problem directly as an MIP then uses the prescribed solver to solve the MIP.
 
@@ -13,8 +13,8 @@ Sound and complete.
 
 """
 @with_kw struct VanillaMIP
-    optimizer = Gurobi.Optimizer
-    m::Float64 = 1.0e8  # The big M in the linearization
+    optimizer = GLPK.Optimizer
+    m::Float64 = 1.0e4  # The big M in the linearization
     time_limit::Int = 1200 # Time limit in seconds
 
 end

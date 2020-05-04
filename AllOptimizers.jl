@@ -8,7 +8,7 @@ nnet_file = "./Networks/AutoTaxi/AutoTaxi_32Relus_200Epochs_OneOutput.nnet"
 
 LBFGS_optimizer = NeuralOptimization.LBFGS()
 VanillaMIP_optimizer = NeuralOptimization.VanillaMIP(time_limit=10)
-
+Sherlock_optimizer = NeuralOptimization.Sherlock()
 
 # Create the problem: network, input constraints, output constraints,
 # objective function, max vs. min, and the problem type (:linear_objective or :min_perturbation_linf)
@@ -22,8 +22,9 @@ max = true
 problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max)
 
 # Run each optimizer
-result_LBFGS = NeuralOptimization.optimize(LBFGS_optimizer, problem)
-result_VanillaMIP = NeuralOptimization.optimize(VanillaMIP_optimizer, problem)
+# result_LBFGS = NeuralOptimization.optimize(LBFGS_optimizer, problem)
+# result_VanillaMIP = NeuralOptimization.optimize(VanillaMIP_optimizer, problem)
+result_Sherlock = NeuralOptimization.optimize(Sherlock_optimizer, problem)
 
 # Print results
 println("LBFGS Status: ", result_LBFGS.status, " Optimal Value: ", result_LBFGS.objective_value)
@@ -31,3 +32,6 @@ println("Optimal val from input: ", NeuralOptimization.compute_objective(network
 
 println("Vanilla MIP Status: ", result_VanillaMIP.status, " Optimal Value: ", result_VanillaMIP.objective_value)
 println("Optimal val from input: ", NeuralOptimization.compute_objective(network, result_VanillaMIP.input, objective))
+
+println("Sherlock Status: ", result_Sherlock.status, " Optimal Value: ", result_Sherlock.objective_value)
+println("Optimal val from input: ", NeuralOptimization.compute_objective(network, result_Sherlock.input, objective))

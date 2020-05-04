@@ -16,6 +16,9 @@ using PyCall; # For calling to Marabou
 using LinearAlgebra
 import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
 
+# For optimization methods:
+import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE
+
 # Include utils that help to define the networks and problems
 include("utils/activation.jl")
 include("utils/network.jl")
@@ -46,6 +49,10 @@ export
 
 include("approximate/LBFGS.jl")
 include("exact/VanillaMIP.jl")
+include("exact/Sherlock.jl")
+
 export LBFGS
+export VanillaMIP
+export Sherlock
 
 end
