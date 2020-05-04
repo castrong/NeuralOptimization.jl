@@ -60,6 +60,13 @@ function compute_output(nnet::Network, input)
     return curr_value # would another name be better?
 end
 
+
+function LinearObjectiveToWeightVector(objective::LinearObjective, n::Int)
+    weight_vector = zeros(n)
+    weight_vector[objective.variables] = objective.coefficients;
+    return weight_vector
+end
+
 function compute_objective(nnet::Network, input, objective::LinearObjective)
     curr_value = input
     for layer in nnet.layers # layers does not include input layer (which has no weights/biases)
@@ -67,8 +74,7 @@ function compute_objective(nnet::Network, input, objective::LinearObjective)
     end
 
     # Fill in a weight vector from the objective, then dot it with the output layer
-    weight_vector = zeros(length(curr_value))
-    weight_vector[objective.variables] = objective.coefficients;
+    weight_vector = LinearObjectiveToWeightVector(objective, length(curr_value))
     return transpose(weight_vector) * curr_value # would another name be better?
 end
 

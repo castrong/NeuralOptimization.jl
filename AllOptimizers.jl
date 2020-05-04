@@ -6,7 +6,9 @@ using NeuralVerification
 
 nnet_file = "./Networks/AutoTaxi/AutoTaxi_32Relus_200Epochs_OneOutput.nnet"
 
-optimizer = NeuralOptimization.LBFGS()
+LBFGS_optimizer = NeuralOptimization.LBFGS()
+VanillaMIP_optimizer = NeuralOptimization.VanillaMIP(time_limit=10)
+
 
 # Create the problem: network, input constraints, output constraints,
 # objective function, max vs. min, and the problem type (:linear_objective or :min_perturbation_linf)
@@ -18,8 +20,14 @@ objective = NeuralOptimization.LinearObjective([1.0], [1]) # objective is to jus
 max = true
 
 problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max)
-result = NeuralOptimization.optimize(optimizer, problem)
-println("Status: ", result.status, " Optimal Value: ", result.objective_value)
 
-# Check that this input gives the optimal value
-println("Optimal val from input: ", NeuralOptimization.compute_objective(network, result.input, objective))
+# Run each optimizer
+result_LBFGS = NeuralOptimization.optimize(LBFGS_optimizer, problem)
+result_VanillaMIP = NeuralOptimization.optimize(VanillaMIP_optimizer, problem)
+
+# Print results
+println("LBFGS Status: ", result_LBFGS.status, " Optimal Value: ", result_LBFGS.objective_value)
+println("Optimal val from input: ", NeuralOptimization.compute_objective(network, result_LBFGS.input, objective))
+
+println("Vanilla MIP Status: ", result_VanillaMIP.status, " Optimal Value: ", result_VanillaMIP.objective_value)
+println("Optimal val from input: ", NeuralOptimization.compute_objective(network, result_VanillaMIP.input, objective))
