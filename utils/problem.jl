@@ -28,5 +28,5 @@ struct Result{N<: Number}
 	# Status can be :success, :timeout, :error
     status::Symbol
 	input::Vector{N}
-	output::Float64
+	objective_value::Float64
 end

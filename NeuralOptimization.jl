@@ -11,6 +11,7 @@ using LazySets
 using Optim # for (L-) BFGS
 Pkg.add(Pkg.PackageSpec(url="https://github.com/jaypmorgan/Adversarial.jl.git")); # Adversarial.jl
 using Adversarial;
+using PyCall; # For calling to Marabou 
 
 using LinearAlgebra
 import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
@@ -36,7 +37,11 @@ export
     read_nnet,
     compute_output,
     compute_objective,
-    forward_network
+    compute_gradient,
+    forward_network,
+    optimize
+
+
 
 include("approximate/LBFGS.jl")
 export LBFGS
