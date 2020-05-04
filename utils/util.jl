@@ -61,31 +61,15 @@ function compute_output(nnet::Network, input)
 end
 
 function compute_objective(nnet::Network, input, objective::LinearObjective)
-    layer_value = input
-
-    # Accumulate the objective as you do the forward pass
-    objective_val = 0
-
-    # Find if any relevant variables are in your input layer
-    for (variable_index, variable_location) in enumerate(objective.variables)
-        if (1 == variable_location[1])
-            objective_val += objective.coefficients[variable_index] * layer_value[variable_location[2]]
-        end
+    curr_value = input
+    for layer in nnet.layers # layers does not include input layer (which has no weights/biases)
+        curr_value = layer.activation(affine_map(layer, curr_value))
     end
 
-    # Go through each layer
-    for (layer_index, layer) in enumerate(nnet.layers)
-        layer_value = layer.activation(affine_map(layer, layer_value))
-
-        # Find if any relevant variables are in this layer - if so, add them to your objective
-        for (variable_index, variable_location) in enumerate(objective.variables)
-            if (layer_index + 1 == variable_location[1])
-                objective_val += objective.coefficients[variable_index] * layer_value[variable_location[2]]
-            end
-        end
-    end
-
-    return objective_val
+    # Fill in a weight vector from the objective, then dot it with the output layer
+    weight_vector = zeros(length(curr_value))
+    weight_vector[objective.variables] = objective.coefficients;
+    return transpose(weight_vector) * curr_value # would another name be better?
 end
 
 """

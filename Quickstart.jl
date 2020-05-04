@@ -12,15 +12,12 @@ optimizer = NeuralOptimization.LBFGS()
 # objective function, max vs. min, and the problem type (:linear_objective or :min_perturbation_linf)
 network = NeuralOptimization.read_nnet(nnet_file)
 num_inputs = size(network.layers[1].weights, 2)
+
 input = NeuralOptimization.Hyperrectangle(low=0.2 * ones(num_inputs), high=0.8 * ones(num_inputs))
-output = nothing
-
-end_layer_index = length(network.layers) + 1 # add 1 to account for the input layer
-objective = NeuralOptimization.LinearObjective([1.0], [(end_layer_index, 1)]) # objective is to just maximize the output
+objective = NeuralOptimization.LinearObjective([1.0], [1]) # objective is to just maximize the output
 max = true
-problem_type = :linear_objective
 
-problem = NeuralOptimization.Problem(network, input, output, objective, max, problem_type)
+problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max)
 result = NeuralOptimization.optimize(optimizer, problem)
 println("Status: ", result.status, " Optimal Value: ", result.objective_value)
 
