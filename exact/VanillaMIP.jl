@@ -44,13 +44,14 @@ function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem)
     optimize!(model)
     @debug termination_status(model)
 
-    if (termination_status(model) != MOI.OPTIMAL)
-        println("Returned not optimal")
-        return Result(:error, -1, -1)
-        return -1
-    else
-        println("Objective value: ", objective_value(model))
-        println("Input: ", value.(neurons[1]))
+    if (termination_status(model) == OPTIMAL)
+        @debug "VanillaMIP Returned Optimal"
         return Result(:success, value.(neurons[1]), objective_value(model))
+    elseif (termination_status(model) == TIME_LIMIT)
+        @debug "VanillaMIP Timed Out"
+        return Result(:timeout, [-1.0], -1.0)
+    else
+        @debug "VanillaMIP Errored"
+        return Result(:error, [-1.0], -1.0)
     end
 end

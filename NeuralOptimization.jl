@@ -17,7 +17,7 @@ using LinearAlgebra
 import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
 
 # For optimization methods:
-import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE
+import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE, JuMP.MOI.TIME_LIMIT
 
 # Include utils that help to define the networks and problems
 include("utils/activation.jl")
