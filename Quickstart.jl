@@ -2,7 +2,7 @@ ENV["JULIA_DEBUG"] = Main # turns on logging (@debug, @info, @warn) for "include
 
 # Read in an example network
 include("./NeuralOptimization.jl")
-using NeuralVerification
+#using NeuralVerification
 
 nnet_file = "./Networks/AutoTaxi/AutoTaxi_32Relus_200Epochs_OneOutput.nnet"
 

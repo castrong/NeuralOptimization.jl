@@ -1,6 +1,5 @@
 """
     read_nnet(fname::String; last_layer_activation = Id())
-
 Read in neural net from a `.nnet` file and return Network struct.
 The `.nnet` format is borrowed from [NNet](https://github.com/sisl/NNet).
 The format assumes all hidden layers have ReLU activation.

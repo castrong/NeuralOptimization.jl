@@ -1,8 +1,19 @@
-# Input constraint is:
-# Output constraint is:
+"""
+    LBFGS()
 
+This uses Optim's LBFGS optimizer to approximately solve the problem
+
+# Problem requirement
+1. Network: any depth, ReLU activation
+2. Input: Hyperrectangle
+3. Objective: Any linear objective
+
+# Property
+Approximate
+
+"""
 @with_kw struct LBFGS
-    test_num = 100
+    dummy_var = 1
 end
 
 function optimize(solver::LBFGS, problem::Problem)

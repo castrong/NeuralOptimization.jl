@@ -11,10 +11,16 @@ for i, label in enumerate(y_train):
 
 label = 2
 index = 3
-X = x_train[label_to_points[label][index]]
-print("A training point with label {}".format(label), X)
-plt.imshow(X, cmap='Greys')
 
-X_norm = X.flatten() / 255
-print("Normalized input: ", X_norm)
-plt.imshow(X, cmap='Greys')
+for label in range(10):
+	for index in range(5):
+		
+		X = x_train[label_to_points[label][index]]
+		print("A training point with label {}".format(label), X)
+		plt.imshow(X, cmap='Greys')
+
+		X_norm = X.flatten() / 255
+		print("Normalized input: ", X_norm)
+		plt.imshow(X, cmap='Greys')
+
+		np.save("MNISTlabel_" + str(label) + "_index_" + str(index) + "_.npy", X_norm)

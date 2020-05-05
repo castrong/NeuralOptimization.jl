@@ -31,7 +31,6 @@ function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem)
 
     # Add an objective to maximize our output
     weight_vector = LinearObjectiveToWeightVector(objective, length(last(neurons)))
-    weight_vector[objective.variables] = objective.coefficients;
     if problem.max
         @objective(model, Max, transpose(weight_vector) * last(neurons))
     else

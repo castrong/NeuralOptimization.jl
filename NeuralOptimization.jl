@@ -9,6 +9,13 @@ using Parameters # For a cleaner interface when creating models with named param
 using Interpolations # only for PiecewiseLinear
 using LazySets
 using Optim # for (L-) BFGS
+
+# We have to pin an old version of Flux to get it to work with Adversarial.jl
+Pkg.free("Flux")
+Pkg.add(Pkg.PackageSpec(name="Flux", version="0.8.3"))
+Pkg.pin(Pkg.PackageSpec(name="Flux", version="0.8.3"))
+using Flux;
+
 Pkg.add(Pkg.PackageSpec(url="https://github.com/jaypmorgan/Adversarial.jl.git")); # Adversarial.jl
 using Adversarial;
 using PyCall; # For calling to Marabou
@@ -28,6 +35,10 @@ include("utils/variables.jl")
 include("utils/objectives.jl")
 include("utils/constraints.jl")
 
+# To help with printouts
+macro Name(arg)
+    string(arg)
+end
 
 function __init()__
     println("Hello world");
@@ -45,13 +56,16 @@ export
     compute_objective,
     compute_gradient,
     forward_network,
-    optimize
+    optimize,
+    read_nnet
 
 include("approximate/LBFGS.jl")
+include("approximate/FGSM.jl")
 include("exact/VanillaMIP.jl")
 include("exact/Sherlock.jl")
 
 export LBFGS
+export FGSM
 export VanillaMIP
 export Sherlock
 
