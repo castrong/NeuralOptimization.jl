@@ -17,7 +17,7 @@ example_input = "./Datasets/MNIST/MNISTlabel_0_index_0_.npy"
 center_input = transpose(npzread(example_input)) # Transpose for AutoTaxi
 #plot(Gray.(reshape(center_input, 28, 28)))
 # Visualize: plot(Gray.(reshape(center_input, __, __)))
-input_radius = 0.0003
+input_radius = 0.001
 time_limit = 900
 
 # Create the optimizers
@@ -34,13 +34,13 @@ Sherlock_GLPK_optimizer = NeuralOptimization.Sherlock(optimizer=GLPK.Optimizer, 
 
 # Marabou
 Marabou_optimizer = NeuralOptimization.Marabou()
-optimizers = [Marabou_optimizer]
+optimizers = [Marabou_optimizer, VanillaMIP_Gurobi_optimizer, Sherlock_Gurobi_optimizer]
 
 # Create the problem: network, input constraints, output constraints, max vs. min
 num_inputs = size(network.layers[1].weights, 2)
 
 input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], input_radius * ones(num_inputs)) # center and radius
-objective = NeuralOptimization.LinearObjective([1.0], [3]) # objective is to just maximize the first output
+objective = NeuralOptimization.LinearObjective([1.0], [1]) # objective is to just maximize the first output
 max = true
 
 problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max)

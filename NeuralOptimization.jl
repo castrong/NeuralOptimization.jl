@@ -28,6 +28,7 @@ import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
 
 # For optimization methods:
 import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE, JuMP.MOI.TIME_LIMIT
+JuMP.Model(solver) = Model(with_optimizer(solver.optimizer, OutputFlag=solver.output_flag, Threads=solver.threads))
 
 # Include utils that help to define the networks and problems
 include("utils/activation.jl")
