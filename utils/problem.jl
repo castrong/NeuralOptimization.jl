@@ -77,7 +77,7 @@ struct MinPerturbationProblem{P, N<: Number} <: Problem
 	network::Network
 	center_input::Vector{N}
 	output::HPolytope
-	objective::Symbol # can be :linf, :l1
+	objective::Symbol # can be :linf
 end
 
 

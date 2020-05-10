@@ -9,6 +9,10 @@ using Parameters # For a cleaner interface when creating models with named param
 using Interpolations # only for PiecewiseLinear
 using LazySets
 using Optim # for (L-) BFGS
+using Printf # For writing out .nnet files
+using NPZ # For reading and writing .npy files
+using PyCall # Also to read .npz with certain data types unsupported by NPZ
+np = pyimport("numpy")
 
 # We have to pin an old version of Flux to get it to work with Adversarial.jl
 Pkg.free("Flux")
@@ -18,7 +22,6 @@ using Flux;
 
 Pkg.add(Pkg.PackageSpec(url="https://github.com/jaypmorgan/Adversarial.jl.git")); # Adversarial.jl
 using Adversarial;
-using PyCall; # For calling to Marabou
 
 using LinearAlgebra
 import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
@@ -63,10 +66,12 @@ include("approximate/LBFGS.jl")
 include("approximate/FGSM.jl")
 include("exact/VanillaMIP.jl")
 include("exact/Sherlock.jl")
+include("exact/Marabou.jl")
 
 export LBFGS
 export FGSM
 export VanillaMIP
 export Sherlock
+export Marabou
 
 end

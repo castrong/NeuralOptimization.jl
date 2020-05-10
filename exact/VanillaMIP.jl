@@ -14,6 +14,7 @@ Sound and complete.
 """
 @with_kw struct VanillaMIP
     optimizer = GLPK.Optimizer
+    Threads=1
     m::Float64 = 1.0e4  # The big M in the linearization
     time_limit::Int = 1200 # Time limit in seconds
 
