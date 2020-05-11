@@ -32,13 +32,17 @@ import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE, JuMP.MOI.TIME_LIMIT
 # TODO: What should this be like long term? want to have a clean process
 # of specifying things but they're not supported by all optimizers
 function model_creator(solver)
+    println("in model creator")
     if (solver.optimizer == Gurobi.Optimizer)
-        return Model(with_optimizer(solver.optimizer, OutputFlag=solver.output_flag, Threads=solver.threads))
+        println("in first option")
+        return Model(with_optimizer(solver.optimizer))#, OutputFlag=solver.output_flag, Threads=solver.threads))
+        println("end first option")
     else
+        println("in second option")
         return Model(with_optimizer(solver.optimizer))
     end
 end
-JuMP.Model(solver) = model_creator(solver)
+JuMP.Model(solver) = Model(with_optimizer(solver.optimizer))#model_creator(solver)
 
 JuMP.value(vars::Vector{VariableRef}) = value.(vars)
 

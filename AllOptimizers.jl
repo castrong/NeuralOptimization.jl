@@ -17,8 +17,8 @@ example_input = "./Datasets/MNIST/MNISTlabel_0_index_0_.npy"
 center_input = transpose(npzread(example_input)) # Transpose for AutoTaxi
 #plot(Gray.(reshape(center_input, 28, 28)))
 # Visualize: plot(Gray.(reshape(center_input, __, __)))
-input_radius = 0.00004
-time_limit = 900
+input_radius = 0.1
+time_limit = 10
 
 # Create the optimizers
 
@@ -27,23 +27,23 @@ LBFGS_optimizer = NeuralOptimization.LBFGS()
 FGSM_optimizer = NeuralOptimization.FGSM()
 
 # NSVerify and Sherlock
-VanillaMIP_Gurobi_optimizer = NeuralOptimization.VanillaMIP(optimizer=Gurobi.Optimizer, m=1e3, time_limit=time_limit)
-VanillaMIP_GLPK_optimizer = NeuralOptimization.VanillaMIP(optimizer=GLPK.Optimizer, m=1e3, time_limit=time_limit)
-Sherlock_Gurobi_optimizer = NeuralOptimization.Sherlock(optimizer=Gurobi.Optimizer, time_limit=time_limit)
-Sherlock_GLPK_optimizer = NeuralOptimization.Sherlock(optimizer=GLPK.Optimizer, time_limit=time_limit)
+VanillaMIP_Gurobi_optimizer = NeuralOptimization.VanillaMIP(optimizer=Gurobi.Optimizer, m=1e3)
+VanillaMIP_GLPK_optimizer = NeuralOptimization.VanillaMIP(optimizer=GLPK.Optimizer, m=1e3)
+Sherlock_Gurobi_optimizer = NeuralOptimization.Sherlock(optimizer=Gurobi.Optimizer)
+Sherlock_GLPK_optimizer = NeuralOptimization.Sherlock(optimizer=GLPK.Optimizer)
 
 # Marabou
 Marabou_optimizer = NeuralOptimization.Marabou()
 
 # List all your optimizers you'd like to run
-optimizers = [LBFGS_optimizer, Marabou_optimizer, VanillaMIP_Gurobi_optimizer] #,VanillaMIP_GLPK_optimizer, Sherlock_Gurobi_optimizer, Sherlock_GLPK_optimizer]
+optimizers = [Sherlock_Gurobi_optimizer, LBFGS_optimizer, Marabou_optimizer, VanillaMIP_Gurobi_optimizer]
 
 # Create the problem: network, input constraints, output constraints, max vs. min
 num_inputs = size(network.layers[1].weights, 2)
 
 input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], input_radius * ones(num_inputs)) # center and radius
 objective = NeuralOptimization.LinearObjective([1.0, -1.0], [1, 2]) # objective is to just maximize the first output
-max = true
+max = false
 
 problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max)
 
@@ -51,7 +51,7 @@ problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective
 results = []
 times = []
 for optimizer in optimizers
-    time = @elapsed result = NeuralOptimization.optimize(optimizer, problem)
+    time = @elapsed result = NeuralOptimization.optimize(optimizer, problem, time_limit)
     push!(results, result)
     push!(times, time)
 end
