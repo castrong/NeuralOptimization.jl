@@ -60,8 +60,9 @@ macro Name(arg)
     string(arg)
 end
 
-function __init()__
-    println("Hello world");
+using Requires # to require a certian version of flux
+function __init__()
+  @require Flux="587475ba-b771-5e3f-ad9e-33799f191a9c" include("utils/flux.jl")
 end
 
 # Export helpful objects from your includes

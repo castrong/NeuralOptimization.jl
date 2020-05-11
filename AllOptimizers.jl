@@ -6,6 +6,7 @@ using NPZ
 import Pkg; Pkg.add("Colors")
 using Colors, Plots
 
+
 # Read in an example network
 include("./NeuralOptimization.jl")
 
@@ -14,10 +15,10 @@ nnet_file = "./Networks/MNIST/mnist10x10.nnet"
 network = NeuralOptimization.read_nnet(nnet_file)
 
 example_input = "./Datasets/MNIST/MNISTlabel_0_index_0_.npy"
-center_input = transpose(npzread(example_input)) # Transpose for AutoTaxi
+center_input = npzread(example_input) # Transpose for AutoTaxi - transpose(npzread(example_input))
 #plot(Gray.(reshape(center_input, 28, 28)))
 # Visualize: plot(Gray.(reshape(center_input, __, __)))
-input_radius = 0.1
+input_radius = 0.01
 time_limit = 10
 
 # Create the optimizers
@@ -36,14 +37,14 @@ Sherlock_GLPK_optimizer = NeuralOptimization.Sherlock(optimizer=GLPK.Optimizer)
 Marabou_optimizer = NeuralOptimization.Marabou()
 
 # List all your optimizers you'd like to run
-optimizers = [Sherlock_Gurobi_optimizer, LBFGS_optimizer, Marabou_optimizer, VanillaMIP_Gurobi_optimizer]
+optimizers = [FGSM_optimizer]
 
 # Create the problem: network, input constraints, output constraints, max vs. min
 num_inputs = size(network.layers[1].weights, 2)
 
 input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], input_radius * ones(num_inputs)) # center and radius
-objective = NeuralOptimization.LinearObjective([1.0, -1.0], [1, 2]) # objective is to just maximize the first output
-max = false
+objective = NeuralOptimization.LinearObjective([-1.0, 1.0], [1, 3]) # objective is to just maximize the first output
+max = true
 
 problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max)
 
