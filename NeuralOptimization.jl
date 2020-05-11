@@ -28,7 +28,19 @@ import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
 
 # For optimization methods:
 import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE, JuMP.MOI.TIME_LIMIT
-JuMP.Model(solver) = Model(with_optimizer(solver.optimizer, OutputFlag=solver.output_flag, Threads=solver.threads))
+
+# TODO: What should this be like long term? want to have a clean process
+# of specifying things but they're not supported by all optimizers
+function model_creator(solver)
+    if (solver.optimizer == Gurobi.Optimizer)
+        return Model(with_optimizer(solver.optimizer, OutputFlag=solver.output_flag, Threads=solver.threads))
+    else
+        return Model(with_optimizer(solver.optimizer))
+    end
+end
+JuMP.Model(solver) = model_creator(solver)
+
+JuMP.value(vars::Vector{VariableRef}) = value.(vars)
 
 # Include utils that help to define the networks and problems
 include("utils/activation.jl")
