@@ -16,9 +16,10 @@ Sound and complete
 
 """
 @with_kw struct Marabou
-    dummy_var = 1
+    output_flag = 1 # output flag for JuMP model initialization
+    threads = 1 # threads to use in the solver
 end
-function optimize(solver::Marabou, problem::OutputOptimizationProblem, timeout=100)
+function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 1200)
     @debug "Optimizing with Marabou"
 
     # write out input constraint matrix A, input constraint vector b, and
@@ -26,16 +27,32 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, timeout=1
     data_file = "./utils/temp_files_for_transfer/temp_marabou.npz"
     network_file = "./utils/temp_files_for_transfer/temp_marabou_network.nnet"
     result_file = "./utils/temp_files_for_transfer/result.npz"
-    num_outputs = length(problem.network.layers[end].bias)
 
-    A, b = tosimplehrep(problem.input)
-    weight_vector = LinearObjectiveToWeightVector(problem.objective, num_outputs)
+    # If our last layer is ID we can replace the last layer and combine
+    # it with the objective - shouldn't change performance but is
+    # consistent with the network structure for Sherlock
+    if (problem.network.layers[end].activation == Id())
+        @debug "In Marabou incorporating into single output layer"
+        augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
+        augmented_objective = LinearObjective([1.0], [1])
+        augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max)
+    else
+        augmented_problem = problem
+    end
+
+    A, b = tosimplehrep(augmented_problem.input)
+    weight_vector = linear_objective_to_weight_vector(augmented_problem.objective, length(augmented_problem.network.layers[end].bias))
+
+    # account for maximization vs minimization
+    if (!augmented_problem.max)
+        weight_vector = -1.0 * weight_vector
+    end
 
     npzwrite(data_file, Dict("A" => A, "b" => b, "weight_vector" => weight_vector))
-    write_nnet(network_file, problem.network)
+    write_nnet(network_file, augmented_problem.network)
 
     # Call MarabouPy.py with the path to the needed files
-    command = `python ./exact/MarabouOptimizationPy.py  $data_file $network_file $result_file $timeout`
+    command = `python ./exact/MarabouOptimizationPy.py  $data_file $network_file $result_file $time_limit`
     run(command)
 
     # Read back in the result
@@ -49,5 +66,11 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, timeout=1
         status = :error
     end
 
-    return Result(status, get(result, :input), get(result, :objective_value)[1])
+    obj_val = get(result, :objective_value)[1]
+    # account for maximization vs minimization
+    if (!augmented_problem.max)
+        obj_val = -1.0 * obj_val
+    end
+
+    return Result(status, get(result, :input), obj_val)
 end

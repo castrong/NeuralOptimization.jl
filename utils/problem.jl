@@ -43,7 +43,7 @@ end
 # A way to convert your LinearObjective into a weight vector.
 # ex: If coefficients = [1.0, -1.0, 1.0] and variables = [1, 4, 6] with n = 6
 # then the weight vector is [1.0, 0, 0, -1.0, 0, 1.0]
-function LinearObjectiveToWeightVector(objective::LinearObjective, n::Int)
+function linear_objective_to_weight_vector(objective::LinearObjective, n::Int)
     weight_vector = zeros(n)
     weight_vector[objective.variables] = objective.coefficients;
     return weight_vector

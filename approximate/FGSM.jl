@@ -14,10 +14,11 @@ Approximate
 """
 
 @with_kw struct FGSM
-    dummy_var = 1
+    output_flag = 1 # output flag for JuMP model initialization
+    threads = 1 # threads to use in the solver
 end
 
-function optimize(solver::FGSM, problem::Problem)
+function optimize(solver::FGSM, problem::Problem, time_limit::Int = 1200)
     @debug "Optimizing with FGSM"
 
     # only works with hypercube for now
@@ -30,11 +31,17 @@ function optimize(solver::FGSM, problem::Problem)
     num_outputs = length(problem.network.layers[end].bias)
 
     flux_model = Flux.Chain(problem.network)
-    weight_vector = LinearObjectiveToWeightVector(problem.objective, num_outputs)
+    weight_vector = linear_objective_to_weight_vector(problem.objective, num_outputs)
+
+    # Odd reshaping to get this version of Flux to work with LinearAlgebra (Transpose had errors)
+    # this is our objective - FGSM tries to maximize the cost so we're framing our objective as the cost
+    cost_function = (x, y) -> (reshape(weight_vector, 1, num_outputs) * reshape(flux_model(x), num_outputs, 1))[1]
     if (problem.max)
-        x_adv = Adversarial.FGSM(flux_model, (x, y)->transpose(weight_vector) * flux_model(x), x_0, true_label; ϵ = radius, clamp_range=(0,1))
+        x_adv = Adversarial.FGSM(flux_model, (x, y)->cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(0,1))
+        obj_val = cost_function(x_adv, -1)
     else
-        x_adv = Adversarial.FGSM(flux_model, (x, y)->-transpose(weight_vector) * flux_model(x), x_0, true_label; ϵ = radius, clamp_range=(0,1))
+        x_adv = Adversarial.FGSM(flux_model, (x, y)->-cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(0,1))
+        obj_val = cost_function(x_adv, -1)
     end
-    return Result(:success, x_adv, flux_model(x_adv))
+    return Result(:success, x_adv, obj_val)
 end

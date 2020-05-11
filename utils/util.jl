@@ -159,10 +159,45 @@ function compute_output(nnet::Network, input)
 end
 
 
-function LinearObjectiveToWeightVector(objective::LinearObjective, n::Int)
+function linear_objective_to_weight_vector(objective::LinearObjective, n::Int)
     weight_vector = zeros(n)
     weight_vector[objective.variables] = objective.coefficients;
     return weight_vector
+end
+
+"""
+extend_network_with_objective(network::Network, objective::LinearObjective)
+
+If the last layer is an Id() layer, then changes the layer to account for the objective.
+It becomes a single output whose value will be equal to that objective.
+If the last layer is not an Id() layer, then adds a layer to the end of a network which makes
+the single output of this augmented network
+equal to the objective function evaluated on the original output layer
+
+Returns the new network
+"""
+# if the last layer is ID can we replace it with just a new weight and bias
+# e.g. if it was y = Ax + b, it can become c' (Ax + b) = c' Ax + c'b where c' is our weight vector
+function extend_network_with_objective(network::Network, objective::LinearObjective)
+    nnet = deepcopy(network)
+    weight_vector = linear_objective_to_weight_vector(objective, length(nnet.layers[end].bias))
+    last_layer = nnet.layers[end]
+
+    # If the last layer is Id() we can replace the last layer with a new one
+    if (last_layer.activation == Id())
+        new_weights = Array(transpose(weight_vector) * last_layer.weights)
+        new_bias = Array([transpose(weight_vector) * last_layer.bias])
+
+        @assert size(new_weights, 1) == 1
+        @assert length(new_bias) == 1
+        nnet.layers[end] = Layer(new_weights, new_bias, Id())
+        return nnet
+    # Otherwise we add an extra layer on
+    else
+        new_layer = Layer(weight_vector, [0], ID())
+        push!(nnet.layers, new_layer)
+        return nnet
+    end
 end
 
 function compute_objective(nnet::Network, input, objective::LinearObjective)
@@ -172,7 +207,7 @@ function compute_objective(nnet::Network, input, objective::LinearObjective)
     end
 
     # Fill in a weight vector from the objective, then dot it with the output layer
-    weight_vector = LinearObjectiveToWeightVector(objective, length(curr_value))
+    weight_vector = linear_objective_to_weight_vector(objective, length(curr_value))
     return transpose(weight_vector) * curr_value # would another name be better?
 end
 

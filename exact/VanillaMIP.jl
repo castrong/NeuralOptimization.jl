@@ -14,13 +14,13 @@ Sound and complete.
 """
 @with_kw struct VanillaMIP
     optimizer = GLPK.Optimizer
-    Threads=1
+    output_flag = 1 # output flag for JuMP model initialization
+    threads = 1 # threads to use in the solver
     m::Float64 = 1.0e4  # The big M in the linearization
-    time_limit::Int = 1200 # Time limit in seconds
 
 end
 
-function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem)
+function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem, time_limit::Int = 1200)
     @debug "Optimizing with VanillaMIP"
     model = Model(solver)
     neurons = init_neurons(model, problem.network)
@@ -31,7 +31,7 @@ function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem)
     add_set_constraint!(model, problem.input, first(neurons))
 
     # Add an objective to maximize our output
-    weight_vector = LinearObjectiveToWeightVector(objective, length(last(neurons)))
+    weight_vector = linear_objective_to_weight_vector(objective, length(last(neurons)))
     if problem.max
         @objective(model, Max, transpose(weight_vector) * last(neurons))
     else
@@ -39,7 +39,7 @@ function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem)
     end
 
     # Set a time limit
-    set_time_limit_sec(model, solver.time_limit)
+    set_time_limit_sec(model, time_limit)
 
     optimize!(model)
     @debug termination_status(model)

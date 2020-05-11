@@ -120,7 +120,3 @@ else:
 np.savez(result_file, status=status, input=input_val, objective_value=objective_value)
 
 
-
-
-
-
