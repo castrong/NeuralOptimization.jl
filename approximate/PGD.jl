@@ -1,7 +1,7 @@
 """
-    FGSM()
+    PGD()
 
-This uses Adversarial.jl's implementation of FGSM to approximately solve the problem
+This uses Adversarial.jl's implementation of PGD to approximately solve the problem
 
 # Problem requirement
 1. Network: any depth, ReLU activation
@@ -13,12 +13,12 @@ Approximate
 
 """
 
-@with_kw struct FGSM
+@with_kw struct PGD
     dummy_var = 1
 end
 
-function optimize(solver::FGSM, problem::Problem, time_limit::Int = 1200)
-    @debug "Optimizing with FGSM"
+function optimize(solver::PGD, problem::Problem, time_limit::Int = 1200)
+    @debug "Optimizing with PGD"
 
     # only works with hypercube for now
     @assert problem.input isa Hyperrectangle
@@ -36,10 +36,10 @@ function optimize(solver::FGSM, problem::Problem, time_limit::Int = 1200)
     # this is our objective - FGSM tries to maximize the cost so we're framing our objective as the cost
     cost_function = (x, y) -> (reshape(weight_vector, 1, num_outputs) * reshape(flux_model(x), num_outputs, 1))[1]
     if (problem.max)
-        x_adv = Adversarial.FGSM(flux_model, (x, y)->cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(0,1))
+        x_adv = Adversarial.PGD(flux_model, (x, y)->cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(0,1))
         obj_val = cost_function(x_adv, -1)
     else
-        x_adv = Adversarial.FGSM(flux_model, (x, y)->-cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(0,1))
+        x_adv = Adversarial.PGD(flux_model, (x, y)->-cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(0,1))
         obj_val = cost_function(x_adv, -1)
     end
     return Result(:success, x_adv, obj_val)

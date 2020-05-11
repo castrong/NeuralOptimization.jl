@@ -82,6 +82,7 @@ export
 
 include("approximate/LBFGS.jl")
 include("approximate/FGSM.jl")
+include("approximate/PGD.jl")
 include("exact/VanillaMIP.jl")
 include("exact/Sherlock.jl")
 include("exact/Marabou.jl")
