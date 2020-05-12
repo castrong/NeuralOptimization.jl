@@ -1,14 +1,10 @@
-print("started script")
-
+import time
 import sys
 import numpy as np
 import copy
 from maraboupy import Marabou
 from maraboupy import MarabouCore
 from maraboupy import MarabouUtils
-import time
-
-print("finished imports")
 
 '''
 A script for running a MarabouOptimizer query in line with the inputs expected
@@ -25,7 +21,10 @@ result_file = sys.argv[3]
 timeout = int(sys.argv[4])
 
 data = np.load(data_file)
-A = data['A']
+A_rows = data['A_rows']
+A_cols = data['A_cols']
+A_values = data['A_values']
+
 b = data['b']
 lower_bound = float(data['feasible_value'])
 
@@ -34,6 +33,10 @@ network = Marabou.read_nnet(network_file, use_sbt)
 inputVars = network.inputVars.flatten()
 numInputs = len(inputVars)
 
+
+# Fill in from the sparse representation TODO: This may be an inefficient way to do this
+A = np.zeros((len(b), numInputs))
+A[A_rows, A_cols] = A_values
 
 # # Add input constraints
 for row_index in range(A.shape[0]):
@@ -91,8 +94,8 @@ start_time = time.time()
 max_float = np.finfo(np.float32).max
 upper_bound = max_float
 best_input = []
-
 status = ""
+
 while (upper_bound - lower_bound) >= epsilon:
 	new_network = copy.deepcopy(network)
 	output_var = new_network.outputVars.flatten()[0]
@@ -158,10 +161,6 @@ else:
 
 # Save the output to a file
 np.savez(result_file, status=status, input=best_input_list, objective_value=best_objective)
-
-
-
-
 
 
 

@@ -40,7 +40,7 @@ Marabou_optimizer = NeuralOptimization.Marabou()
 MarabouBinary_optimizer = NeuralOptimization.MarabouBinarySearch()
 
 # List all your optimizers you'd like to run
-optimizers = [MarabouBinary_optimizer]#[LBFGS_optimizer, PGD_optimizer, FGSM_optimizer, VanillaMIP_Gurobi_optimizer, VanillaMIP_GLPK_optimizer, Sherlock_Gurobi_optimizer, Sherlock_GLPK_optimizer, Marabou_optimizer]
+optimizers = [Marabou_optimizer]#[LBFGS_optimizer, PGD_optimizer, FGSM_optimizer, VanillaMIP_Gurobi_optimizer, VanillaMIP_GLPK_optimizer, Sherlock_Gurobi_optimizer, Sherlock_GLPK_optimizer, Marabou_optimizer]
 
 # Create the problem: network, input constraints, output constraints, max vs. min
 num_inputs = size(network.layers[1].weights, 2)

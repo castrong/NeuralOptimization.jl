@@ -19,6 +19,8 @@ Sound and complete
     use_sbt = false
 end
 function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 1200)
+    start_function_time = time()
+
     @debug "Optimizing with Marabou"
     @assert problem.input isa Hyperrectangle or problem.input isa HPolytope
 
@@ -41,6 +43,11 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
     end
 
     A, b = tosimplehrep(augmented_problem.input)
+    # Condense to sparse representation - three vectors (rows, cols, and their values)
+    non_zero_indices = findall(!iszero, A)
+    row_indices = [index[1] for index in non_zero_indices]
+    col_indices = [index[2] for index in non_zero_indices]
+    values = A[non_zero_indices]
     weight_vector = linear_objective_to_weight_vector(augmented_problem.objective, length(augmented_problem.network.layers[end].bias))
 
     # account for maximization vs minimization
@@ -48,12 +55,16 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
         weight_vector = -1.0 * weight_vector
     end
 
-    npzwrite(data_file, Dict("A" => A, "b" => b, "weight_vector" => weight_vector))
+
+    npzwrite(data_file, Dict("A_rows" => row_indices .- 1, "A_cols" => col_indices .- 1, "A_values" => values, "b" => b, "weight_vector" => weight_vector))
     write_nnet(network_file, augmented_problem.network)
 
     # Call MarabouPy.py with the path to the needed files
+    call_command_time = time()
     command = `python ./src/exact/MarabouOptimizationPy.py  $data_file $network_file $result_file $time_limit`
     run(command)
+
+    @debug "Time to get to call command: " (call_command_time - start_function_time)
 
     # Read back in the result
     result = np.load(result_file)

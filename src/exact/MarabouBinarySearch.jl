@@ -21,6 +21,7 @@ Sound and complete
     use_sbt = false
 end
 function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProblem, time_limit::Int = 1200)
+    start_function_time = time()
     @debug "Optimizing with Marabou Binary Search"
     @assert problem.input isa Hyperrectangle or problem.input isa HPolytope
 
@@ -52,19 +53,27 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
     # TODO: Do we lose any efficiency if we expand without
     negative_objective = problem.max
     augmented_network = extend_network_with_objective(problem.network, problem.objective, !problem.max) # If the last layer is ID it won't add a layer
+    @debug "after extend network with objective"
+
 
     A, b = tosimplehrep(problem.input)
-    npzwrite(data_file, Dict("A" => A, "b" => b, "feasible_value" => feasible_val))
+    # Condense to sparse representation - three vectors (rows, cols, and their values)
+    non_zero_indices = findall(!iszero, A)
+    row_indices = [index[1] for index in non_zero_indices]
+    col_indices = [index[2] for index in non_zero_indices]
+    values = A[non_zero_indices]
 
+    # Subtract 1 off the indices to match with python indexing
+    npzwrite(data_file, Dict("A_rows" => row_indices .- 1, "A_cols" => col_indices .- 1, "A_values" => values, "b" => b, "feasible_value" => feasible_val))
     write_nnet(network_file, augmented_network)
-    @debug "after write_nnet"
 
     # Call MarabouPy.py with the path to the needed files
     # the command will maximize - so we will flip negative after if need be
-    @debug "about to call binary search"
+    call_command_time = time()
     command = `python ./src/exact/MarabouBinarySearchPy.py  $data_file $network_file $result_file $time_limit`
     run(command)
 
+    @debug "Time to get to call command: " (call_command_time - start_function_time)
     # Read back in the result
     result = np.load(result_file)
     status = -1
