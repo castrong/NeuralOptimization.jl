@@ -1,3 +1,5 @@
+print("started script")
+
 import sys
 import numpy as np
 import copy
@@ -5,6 +7,8 @@ from maraboupy import Marabou
 from maraboupy import MarabouCore
 from maraboupy import MarabouUtils
 import time
+
+print("finished imports")
 
 '''
 A script for running a MarabouOptimizer query in line with the inputs expected
@@ -23,9 +27,7 @@ timeout = int(sys.argv[4])
 data = np.load(data_file)
 A = data['A']
 b = data['b']
-x_0 = data['x_0']
-
-weight_vector = data['weight_vector']
+lower_bound = float(data['feasible_value'])
 
 # Load in the network
 network = Marabou.read_nnet(network_file, use_sbt)
@@ -82,10 +84,88 @@ options._timeoutInSeconds = timeout
 options._dnc = False
 epsilon = 1e-4
 
+start_time = time.time()
 
-network_copy = copy.deepcopy(network)
+
 # Loop until we are confident in our result within epsilon
-vals, state = new_network.solve(filename="", options=options)
+max_float = np.finfo(np.float32).max
+upper_bound = max_float
+best_input = []
+
+status = ""
+while (upper_bound - lower_bound) >= epsilon:
+	new_network = copy.deepcopy(network)
+	output_var = new_network.outputVars.flatten()[0]
+	next_val = 0
+	# If still searching for an upper bound
+	if (upper_bound == max_float):	
+		if (lower_bound < 0):
+			next_val = -lower_bound
+		elif (lower_bound == 0):
+			next_val = epsilon
+		else:
+			next_val = lower_bound * 2
+	# If we have a lower and upper, split the difference
+	else:
+		next_val = (lower_bound + upper_bound) / 2.0
+	
+	print("!!!!!!!next val: ", next_val)
+	new_network.setLowerBound(output_var, next_val)
+
+	# update your timeout
+	time_remaining = timeout - int(time.time() - start_time)
+	print("Time remaining: ", time_remaining)
+	if (time_remaining <= 0):
+		status = "timeout"
+		break
+
+	options._timeoutInSeconds = time_remaining
+	vals, state = new_network.solve(filename="", options=options)
+
+	if (state.hasTimedOut()):
+		status = "timeout"
+		break
+
+	# UNSAT if it couldn't find a counter example
+	if (len(vals) == 0):
+		upper_bound = next_val
+		print("Updating upper to: ", upper_bound)
+
+	else:
+		lower_bound = next_val
+		# return the most recent vals that were achievable
+		best_input = vals
+		print("Updating lower to: ", lower_bound)
+
+	print("lower, upper after this: ", (lower_bound, upper_bound))
+
+# Set status
+if status != "timeout":
+	status = "success"
+
+#input_val = [best_input[i] for i in range(0, numInputs)]
+# If we found an input, then evaluate it and return that as the best objective
+best_objective = -1
+best_input_list = [best_input[i] for i in range(0, numInputs)]
+
+if len(best_input) > 0:
+	network = Marabou.read_nnet(network_file, use_sbt)
+	best_objective = network.evaluateWithMarabou([best_input_list])[0]
+else:
+	best_objective = lower_bound
+
+
+
+# Save the output to a file
+np.savez(result_file, status=status, input=best_input_list, objective_value=best_objective)
+
+
+
+
+
+
+
+
 
 
 

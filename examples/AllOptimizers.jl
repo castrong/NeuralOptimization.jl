@@ -13,12 +13,13 @@ include("../src/NeuralOptimization.jl")
 # Network and input files
 nnet_file = "./Networks/MNIST/mnist10x10.nnet"
 network = NeuralOptimization.read_nnet(nnet_file)
+
 example_input = "./Datasets/MNIST/MNISTlabel_0_index_0_.npy"
 center_input = npzread(example_input) # Transpose for AutoTaxi - transpose(npzread(example_input))
 #plot(Gray.(reshape(center_input, 28, 28)))
 # Visualize: plot(Gray.(reshape(center_input, __, __)))
 input_radius = 0.0001
-time_limit = 10
+time_limit = 20
 
 # Create the optimizers
 
@@ -36,9 +37,10 @@ Sherlock_GLPK_optimizer = NeuralOptimization.Sherlock(optimizer=GLPK.Optimizer)
 
 # Marabou
 Marabou_optimizer = NeuralOptimization.Marabou()
+MarabouBinary_optimizer = NeuralOptimization.MarabouBinarySearch()
 
 # List all your optimizers you'd like to run
-optimizers = [LBFGS_optimizer, PGD_optimizer, FGSM_optimizer, VanillaMIP_Gurobi_optimizer, VanillaMIP_GLPK_optimizer, Sherlock_Gurobi_optimizer, Sherlock_GLPK_optimizer, Marabou_optimizer]
+optimizers = [MarabouBinary_optimizer]#[LBFGS_optimizer, PGD_optimizer, FGSM_optimizer, VanillaMIP_Gurobi_optimizer, VanillaMIP_GLPK_optimizer, Sherlock_Gurobi_optimizer, Sherlock_GLPK_optimizer, Marabou_optimizer]
 
 # Create the problem: network, input constraints, output constraints, max vs. min
 num_inputs = size(network.layers[1].weights, 2)

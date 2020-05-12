@@ -799,12 +799,12 @@ Input bounds:
 Engine::Solving SAT Problem
 Engine::solve: Initial statistics
 
-15:05:07 Statistics update:
+18:56:47 Statistics update:
 	--- Time Statistics ---
-	Total time elapsed: 112 milli (00:00:00)
+	Total time elapsed: 103 milli (00:00:00)
 		Main loop: 0 milli (00:00:00)
 		Preprocessing time: 26 milli (00:00:00)
-		Unknown: 85 milli (00:00:00)
+		Unknown: 77 milli (00:00:00)
 	Breakdown for main loop:
 		[0.00%] Simplex steps: 0 milli
 		[0.00%] Explicit-basis bound tightening: 0 milli
@@ -861,12 +861,12 @@ Engine::solve: Initial statistics
 
 Engine::solve: SAT assignment found
 
-15:05:07 Statistics update:
+18:56:47 Statistics update:
 	--- Time Statistics ---
-	Total time elapsed: 113 milli (00:00:00)
+	Total time elapsed: 104 milli (00:00:00)
 		Main loop: 0 milli (00:00:00)
 		Preprocessing time: 26 milli (00:00:00)
-		Unknown: 86 milli (00:00:00)
+		Unknown: 77 milli (00:00:00)
 	Breakdown for main loop:
 		[0.00%] Simplex steps: 0 milli
 		[0.00%] Explicit-basis bound tightening: 0 milli

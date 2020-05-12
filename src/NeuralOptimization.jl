@@ -86,11 +86,14 @@ include("approximate/PGD.jl")
 include("exact/VanillaMIP.jl")
 include("exact/Sherlock.jl")
 include("exact/Marabou.jl")
+include("exact/MarabouBinarySearch.jl")
+
 
 export LBFGS
 export FGSM
 export VanillaMIP
 export Sherlock
 export Marabou
+export MarabouBinarySearch
 
 end

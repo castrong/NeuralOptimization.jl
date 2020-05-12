@@ -20,6 +20,7 @@ Sound and complete
 end
 function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 1200)
     @debug "Optimizing with Marabou"
+    @assert problem.input isa Hyperrectangle or problem.input isa HPolytope
 
     # write out input constraint matrix A, input constraint vector b, and
     # objective weight vector c. Then, write nnet file

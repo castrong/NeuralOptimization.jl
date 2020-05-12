@@ -166,7 +166,7 @@ function linear_objective_to_weight_vector(objective::LinearObjective, n::Int)
 end
 
 """
-extend_network_with_objective(network::Network, objective::LinearObjective)
+extend_network_with_objective(network::Network, objective::LinearObjective, negative_objective::Bool)
 
 If the last layer is an Id() layer, then changes the layer to account for the objective.
 It becomes a single output whose value will be equal to that objective.
@@ -174,19 +174,22 @@ If the last layer is not an Id() layer, then adds a layer to the end of a networ
 the single output of this augmented network
 equal to the objective function evaluated on the original output layer
 
+negative_objective can specify that you'd actually like the output to be the negative of the objective
+
 Returns the new network
 """
 # if the last layer is ID can we replace it with just a new weight and bias
 # e.g. if it was y = Ax + b, it can become c' (Ax + b) = c' Ax + c'b where c' is our weight vector
-function extend_network_with_objective(network::Network, objective::LinearObjective)
+function extend_network_with_objective(network::Network, objective::LinearObjective, negative_objective::Bool=false)
     nnet = deepcopy(network)
     weight_vector = linear_objective_to_weight_vector(objective, length(nnet.layers[end].bias))
     last_layer = nnet.layers[end]
+    obj_scaling = negative_objective ? -1.0 : 1.0 # switches between positive or negative objective
 
     # If the last layer is Id() we can replace the last layer with a new one
     if (last_layer.activation == Id())
-        new_weights = Array(transpose(weight_vector) * last_layer.weights)
-        new_bias = Array([transpose(weight_vector) * last_layer.bias])
+        new_weights = Array(transpose(weight_vector) * last_layer.weights) * obj_scaling
+        new_bias = Array([transpose(weight_vector) * last_layer.bias]) * obj_scaling
 
         @assert size(new_weights, 1) == 1
         @assert length(new_bias) == 1
@@ -194,7 +197,7 @@ function extend_network_with_objective(network::Network, objective::LinearObject
         return nnet
     # Otherwise we add an extra layer on
     else
-        new_layer = Layer(weight_vector, [0], ID())
+        new_layer = Layer(weight_vector * obj_scaling, [0], ID())
         push!(nnet.layers, new_layer)
         return nnet
     end
