@@ -70,7 +70,7 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
     # Call MarabouPy.py with the path to the needed files
     # the command will maximize - so we will flip negative after if need be
     call_command_time = time()
-    command = `python ./src/exact/MarabouBinarySearchPy.py  $data_file $network_file $result_file $time_limit`
+    command = `python ./src/exact/MarabouBinarySearchPy.py  $data_file $network_file $result_file $time_limit $(solver.use_sbt)`
     run(command)
 
     @debug "Time to get to call command: " (call_command_time - start_function_time)

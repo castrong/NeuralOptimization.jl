@@ -7,6 +7,12 @@ Number of constraints: 100
 Starting invoke preprocessor!!!
 Engine::processInputQuery: Input query (before preprocessing): 101 equations, 985 variables
 Preprocessing
+Storing into other
+Num layers: 12
+Storing into other
+Num layers: 12
+Storing into other
+Num layers: 12
 Engine::processInputQuery: Input query (after preprocessing): 0 equations, 0 variables
 
 preprocessed the query in invoke preprocessor
@@ -799,12 +805,12 @@ Input bounds:
 Engine::Solving SAT Problem
 Engine::solve: Initial statistics
 
-15:23:37 Statistics update:
+15:31:35 Statistics update:
 	--- Time Statistics ---
-	Total time elapsed: 100 milli (00:00:00)
+	Total time elapsed: 113 milli (00:00:00)
 		Main loop: 0 milli (00:00:00)
-		Preprocessing time: 26 milli (00:00:00)
-		Unknown: 73 milli (00:00:00)
+		Preprocessing time: 36 milli (00:00:00)
+		Unknown: 76 milli (00:00:00)
 	Breakdown for main loop:
 		[0.00%] Simplex steps: 0 milli
 		[0.00%] Explicit-basis bound tightening: 0 milli
@@ -861,12 +867,12 @@ Engine::solve: Initial statistics
 
 Engine::solve: SAT assignment found
 
-15:23:37 Statistics update:
+15:31:35 Statistics update:
 	--- Time Statistics ---
-	Total time elapsed: 101 milli (00:00:00)
+	Total time elapsed: 113 milli (00:00:00)
 		Main loop: 0 milli (00:00:00)
-		Preprocessing time: 26 milli (00:00:00)
-		Unknown: 74 milli (00:00:00)
+		Preprocessing time: 36 milli (00:00:00)
+		Unknown: 77 milli (00:00:00)
 	Breakdown for main loop:
 		[0.00%] Simplex steps: 0 milli
 		[0.00%] Explicit-basis bound tightening: 0 milli

@@ -16,12 +16,12 @@ for NeuralOptimization.jl. So we'll get passed (i) file with A, b, c. The input 
 Ax <= b, and the objective will be transpose(c) * y, where x is the input to the network and y is the
 output from the network.
 '''
-use_sbt = False
 
 data_file = sys.argv[1]
 network_file = sys.argv[2]
 result_file = sys.argv[3]
 timeout = int(sys.argv[4])
+use_sbt = sys.argv[5].lower() == 'true'
 
 data = np.load(data_file)
 A_rows = data['A_rows']
