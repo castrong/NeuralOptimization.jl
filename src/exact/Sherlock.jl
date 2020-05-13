@@ -130,8 +130,6 @@ function ns_verify(solver::Sherlock, network, input_set, output_set, start_time:
     model = Model(solver)
     neurons = init_neurons(model, network)
     deltas = init_deltas(model, network)
-    println("Neuron size: ", size(neurons))
-    println("size first: ", size(first(neurons)))
     add_set_constraint!(model, input_set, first(neurons))
     add_complementary_set_constraint!(model, output_set, last(neurons))
     encode_network!(model, network, neurons, deltas, MixedIntegerLP(solver.m))
@@ -149,4 +147,14 @@ function ns_verify(solver::Sherlock, network, input_set, output_set, start_time:
         return TIME_LIMIT, TIME_LIMIT
     end
     return CounterExampleResult(:unknown)
+end
+
+function Base.show(io::IO, solver::Sherlock)
+    optimizer_string = "otheroptimizer"
+    if solver.optimizer == GLPK.Optimizer
+        optimizer_string = "GLPK"
+    elseif solver.optimizer == Gurobi.Optimizer
+        optimizer_string = "Gurobi"
+    end
+    print(io, string("Sherlock_", optimizer_string, "_", string(solver.threads), "threads_", string(solver.m), "m"))
 end

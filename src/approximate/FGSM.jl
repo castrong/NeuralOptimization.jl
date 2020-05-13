@@ -44,3 +44,7 @@ function optimize(solver::FGSM, problem::Problem, time_limit::Int = 1200)
     end
     return Result(:success, x_adv, obj_val)
 end
+
+function Base.show(io::IO, solver::FGSM)
+  print(io, "FGSM")
+end

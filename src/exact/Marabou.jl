@@ -18,6 +18,7 @@ Sound and complete
 @with_kw struct Marabou
     use_sbt = false
 end
+
 function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 1200)
     @debug "Optimizing with Marabou"
     @assert problem.input isa Hyperrectangle or problem.input isa HPolytope
@@ -78,4 +79,9 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
     end
 
     return Result(status, get(result, :input), obj_val)
+end
+
+function Base.show(io::IO, solver::Marabou)
+    sbt_string = solver.use_sbt ? "sbt" : "nosbt"
+    print("Marabou_", sbt_string)
 end

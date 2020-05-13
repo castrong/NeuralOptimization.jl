@@ -6,20 +6,19 @@ using NPZ
 import Pkg; Pkg.add("Colors")
 using Colors, Plots
 
-
 # Read in an example network
 include("../src/NeuralOptimization.jl")
 
 # Network and input files
-nnet_file = "./Networks/MNIST/mnist10x10.nnet"
+nnet_file = "./Networks/AutoTaxi/AutoTaxi_32Relus_200Epochs_OneOutput.nnet"
 network = NeuralOptimization.read_nnet(nnet_file)
 
-example_input = "./Datasets/MNIST/MNISTlabel_0_index_0_.npy"
+example_input = "./Datasets/AutoTaxi/AutoTaxi_2323.npy"
 center_input = npzread(example_input) # Transpose for AutoTaxi - transpose(npzread(example_input))
 #plot(Gray.(reshape(center_input, 28, 28)))
 # Visualize: plot(Gray.(reshape(center_input, __, __)))
-input_radius = 0.0001
-time_limit = 20
+input_radius = 0.07
+time_limit = 30
 
 # Create the optimizers
 
@@ -42,16 +41,16 @@ MarabouBinary_optimizer = NeuralOptimization.MarabouBinarySearch()
 MarabouBinary_optimizer_sbt = NeuralOptimization.MarabouBinarySearch(use_sbt=true)
 
 # List all your optimizers you'd like to run
-optimizers = [Marabou_optimizer, MarabouBinary_optimizer, Marabou_optimizer_sbt, MarabouBinary_optimizer_sbt]#[LBFGS_optimizer, PGD_optimizer, FGSM_optimizer, VanillaMIP_Gurobi_optimizer, VanillaMIP_GLPK_optimizer, Sherlock_Gurobi_optimizer, Sherlock_GLPK_optimizer, Marabou_optimizer]
+optimizers = [LBFGS_optimizer, PGD_optimizer, FGSM_optimizer, VanillaMIP_Gurobi_optimizer, VanillaMIP_GLPK_optimizer, Sherlock_Gurobi_optimizer, Sherlock_GLPK_optimizer, Marabou_optimizer, MarabouBinary_optimizer]
 
 # Create the problem: network, input constraints, output constraints, max vs. min
 num_inputs = size(network.layers[1].weights, 2)
 
 input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], input_radius * ones(num_inputs)) # center and radius
 objective = NeuralOptimization.LinearObjective([1.0], [1]) # objective is to just maximize the first output
-max = true
+maximize = true
 
-problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max)
+problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize)
 
 # Run each optimizer and save results
 results = []

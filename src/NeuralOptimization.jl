@@ -1,17 +1,19 @@
 module NeuralOptimization
 
 import Pkg;
+import Base.show
 
 using JuMP # Domain specific modeling language to frame our problems
 using GLPK # Open source optimization library
 using Gurobi # Licensed optimization library - access licenses here: https://www.gurobi.com/academia/academic-program-and-licenses/
 using Parameters # For a cleaner interface when creating models with named parameters
 using Interpolations # only for PiecewiseLinear
-using LazySets
+using LazySets # For set descriptions of our input and output
 using Optim # for (L-) BFGS
 using Printf # For writing out .nnet files
 using NPZ # For reading and writing .npy files
 using PyCall # Also to read .npz with certain data types unsupported by NPZ
+
 np = pyimport("numpy")
 
 # We have to pin an old version of Flux to get it to work with Adversarial.jl
@@ -32,13 +34,11 @@ import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE, JuMP.MOI.TIME_LIMIT
 # TODO: What should this be like long term? want to have a clean process
 # of specifying things but they're not supported by all optimizers
 function model_creator(solver)
-    println("in model creator")
     if (solver.optimizer == Gurobi.Optimizer)
-        println("in first option")
-        return Model(with_optimizer(solver.optimizer))#, OutputFlag=solver.output_flag, Threads=solver.threads))
-        println("end first option")
+        print("in here")
+        print(solver)
+        return Model(with_optimizer(solver.optimizer, OutputFlag=solver.output_flag, Threads=solver.threads))
     else
-        println("in second option")
         return Model(with_optimizer(solver.optimizer))
     end
 end

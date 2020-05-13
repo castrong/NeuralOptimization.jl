@@ -17,7 +17,11 @@ Sound and complete.
     output_flag = 1 # output flag for JuMP model initialization
     threads = 1 # threads to use in the solver
     m::Float64 = 1.0e4  # The big M in the linearization
+end
 
+function to_string(solver::LBFGS)
+
+    return
 end
 
 function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem, time_limit::Int = 1200)
@@ -54,4 +58,14 @@ function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem, time_l
         @debug "VanillaMIP Errored"
         return Result(:error, [-1.0], -1.0)
     end
+end
+
+function Base.show(io::IO, solver::VanillaMIP)
+    optimizer_string = "otheroptimizer"
+    if solver.optimizer == GLPK.Optimizer
+        optimizer_string = "GLPK"
+    elseif solver.optimizer == Gurobi.Optimizer
+        optimizer_string = "Gurobi"
+    end
+    print(io, string("VanillaMIP_", optimizer_string, "_", string(solver.threads), "threads_", string(solver.m), "m"))
 end

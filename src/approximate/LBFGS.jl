@@ -68,3 +68,7 @@ function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
 
     return Result(:success, result.minimizer, opt_val)
 end
+
+function Base.show(io::IO, solver::LBFGS)
+  print(io, "LBFGS")
+end

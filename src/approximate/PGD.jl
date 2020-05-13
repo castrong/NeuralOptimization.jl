@@ -44,3 +44,7 @@ function optimize(solver::PGD, problem::Problem, time_limit::Int = 1200)
     end
     return Result(:success, x_adv, obj_val)
 end
+
+function Base.show(io::IO, solver::PGD)
+  print(io, "PGD")
+end

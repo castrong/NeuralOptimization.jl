@@ -17,11 +17,11 @@ Sound and complete
 
 """
 @with_kw struct MarabouBinarySearch
-    optimizer = GLPK.Optimizer
+    optimizer = GLPK.Optimizer # To find a feasible original point
     use_sbt = false
 end
+
 function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProblem, time_limit::Int = 1200)
-    start_function_time = time()
     @debug "Optimizing with Marabou Binary Search"
     @assert problem.input isa Hyperrectangle or problem.input isa HPolytope
 
@@ -31,16 +31,11 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
     add_set_constraint!(model, problem.input, input_vars)
     optimize!(model)
     @assert (value.(input_vars) ∈ problem.input)
-    @debug "Found feasible point"
 
     feasible_val = compute_objective(problem.network, value.(input_vars), problem.objective)
     if (!problem.max)
         feasible_val = feasible_val * -1.0
     end
-
-    @debug "Feasible value: " feasible_val
-
-    @debug "before making data files"
 
     # write out input constraint matrix A, input constraint vector b, and
     # objective weight vector c. Then, write nnet file
@@ -69,11 +64,9 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
 
     # Call MarabouPy.py with the path to the needed files
     # the command will maximize - so we will flip negative after if need be
-    call_command_time = time()
     command = `python ./src/exact/MarabouBinarySearchPy.py  $data_file $network_file $result_file $time_limit $(solver.use_sbt)`
     run(command)
 
-    @debug "Time to get to call command: " (call_command_time - start_function_time)
     # Read back in the result
     result = np.load(result_file)
     status = -1
@@ -93,4 +86,9 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
     end
 
     return Result(status, get(result, :input), obj_val)
+end
+
+function Base.show(io::IO, solver::MarabouBinarySearch)
+    sbt_string = solver.use_sbt ? "sbt" : "nosbt"
+    print(io, string("MarabouBinarySearch_", sbt_string))
 end
