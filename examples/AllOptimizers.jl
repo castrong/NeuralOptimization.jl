@@ -10,15 +10,15 @@ using Colors, Plots
 include("../src/NeuralOptimization.jl")
 
 # Network and input files
-nnet_file = "./Networks/AutoTaxi/AutoTaxi_32Relus_200Epochs_OneOutput.nnet"
+nnet_file = "./Networks/AutoTaxi/AutoTaxi_64Relus_200Epochs_OneOutput.nnet"
 network = NeuralOptimization.read_nnet(nnet_file)
 
 example_input = "./Datasets/AutoTaxi/AutoTaxi_2323.npy"
 center_input = npzread(example_input) # Transpose for AutoTaxi - transpose(npzread(example_input))
 #plot(Gray.(reshape(center_input, 28, 28)))
 # Visualize: plot(Gray.(reshape(center_input, __, __)))
-input_radius = 0.07
-time_limit = 30
+input_radius = 0.001
+time_limit = 300
 
 # Create the optimizers
 

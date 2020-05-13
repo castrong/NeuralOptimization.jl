@@ -13,6 +13,7 @@ using Optim # for (L-) BFGS
 using Printf # For writing out .nnet files
 using NPZ # For reading and writing .npy files
 using PyCall # Also to read .npz with certain data types unsupported by NPZ
+using BenchmarkTools # For our benchmark timing 
 
 np = pyimport("numpy")
 
