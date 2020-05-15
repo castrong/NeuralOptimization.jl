@@ -10,14 +10,14 @@ using Colors, Plots
 include("../src/NeuralOptimization.jl")
 
 # Network and input files
-nnet_file = "./Networks/MNIST/mnist10x10.nnet"
+nnet_file = "./Networks/AutoTaxi/AutoTaxi_32Relus_200Epochs_OneOutput.nnet"
 network = NeuralOptimization.read_nnet(nnet_file)
 
-example_input = "./Datasets/MNIST/MNISTlabel_0_index_1_.npy"
-center_input = npzread(example_input) # Transpose for AutoTaxi - transpose(npzread(example_input))
+example_input = "./Datasets/AutoTaxi/AutoTaxi_12345.npy"
+center_input = transpose(npzread(example_input)) # Transpose for AutoTaxi - transpose(npzread(example_input))
 #plot(Gray.(reshape(center_input, 28, 28)))
 # Visualize: plot(Gray.(reshape(center_input, __, __)))
-input_radius = 0.001
+input_radius = 0.0001
 time_limit = 60
 
 # Create the optimizers
@@ -45,7 +45,7 @@ MarabouBinary_optimizer = NeuralOptimization.MarabouBinarySearch(divide_strategy
 MarabouBinary_optimizer_sbt = NeuralOptimization.MarabouBinarySearch(use_sbt=true, divide_strategy = "EarliestReLU")
 
 # List all your optimizers you'd like to run
-optimizers = [MarabouBinary_optimizer, MarabouBinary_optimizer_sbt]
+optimizers = [VanillaMIP_GLPK_optimizer]
 # optimizers = [LBFGS_optimizer,
 #               PGD_optimizer,
 #               FGSM_optimizer,

@@ -32,7 +32,7 @@ Sound but not complete.
 end
 
 function optimize(solver::Sherlock, problem::OutputOptimizationProblem, time_limit::Int = 1200)
-    @debug "Optimizing with Sherlock"
+    @debug string("Optimizing with: ", solver)
     @assert problem.input isa Hyperrectangle # Bc haven't implemented sample with polytopes
     start_time = time()
 
@@ -152,9 +152,11 @@ end
 function Base.show(io::IO, solver::Sherlock)
     optimizer_string = "otheroptimizer"
     if solver.optimizer == GLPK.Optimizer
+        threads_string =""
         optimizer_string = "GLPK"
     elseif solver.optimizer == Gurobi.Optimizer
+        threads_string = string(solver.threads, "threads_", )
         optimizer_string = "Gurobi"
     end
-    print(io, string("Sherlock_", optimizer_string, "_", string(solver.threads), "threads_", string(solver.m), "m"))
+    print(io, string("Sherlock_", optimizer_string, "_", threads_string, string(solver.m), "m"))
 end

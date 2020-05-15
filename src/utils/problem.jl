@@ -40,6 +40,18 @@ struct LinearObjective{N<: Number}
 	variables::Vector{Int}
 end
 
+# How to display linear objectives
+function Base.show(io::IO, objective::LinearObjective)
+	index = 1
+    for (coefficient, variable) in zip(objective.coefficients, objective.variables)
+		print(io, coefficient, "*y", variable)
+		if (index != length(objective.coefficients))
+			print(io, " + ")
+		end
+		index = index + 1
+	end
+end
+
 # A way to convert your LinearObjective into a weight vector.
 # ex: If coefficients = [1.0, -1.0, 1.0] and variables = [1, 4, 6] with n = 6
 # then the weight vector is [1.0, 0, 0, -1.0, 0, 1.0]

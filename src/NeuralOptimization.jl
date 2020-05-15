@@ -12,10 +12,19 @@ using LazySets # For set descriptions of our input and output
 using Optim # for (L-) BFGS
 using Printf # For writing out .nnet files
 using NPZ # For reading and writing .npy files
-using PyCall # Also to read .npz with certain data types unsupported by NPZ
-using BenchmarkTools # For our benchmark timing 
+using PyCall # For Marabou, also to read .npz with certain data types unsupported by NPZ
+using BenchmarkTools # For our benchmark timing
 
-np = pyimport("numpy")
+# Python libraries that we'll need for Marabou
+py"""
+import time
+import sys
+import numpy as np
+import copy
+from maraboupy import Marabou
+from maraboupy import MarabouCore
+from maraboupy import MarabouUtils
+"""
 
 # We have to pin an old version of Flux to get it to work with Adversarial.jl
 Pkg.free("Flux")

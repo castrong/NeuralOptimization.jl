@@ -18,7 +18,7 @@ Approximate
 end
 
 function optimize(solver::FGSM, problem::Problem, time_limit::Int = 1200)
-    @debug "Optimizing with FGSM"
+    @debug string("Optimizing with: ", solver)
 
     # only works with hypercube for now
     @assert problem.input isa Hyperrectangle

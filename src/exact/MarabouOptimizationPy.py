@@ -82,7 +82,7 @@ for row_index in range(A.shape[0]):
 # Set the options
 options = MarabouCore.Options()
 options._optimize = True
-options._verbosity = 0
+options._verbosity = 1
 options._timeoutInSeconds = timeout
 
 

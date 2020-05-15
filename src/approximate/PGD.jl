@@ -18,7 +18,7 @@ Approximate
 end
 
 function optimize(solver::PGD, problem::Problem, time_limit::Int = 1200)
-    @debug "Optimizing with PGD"
+    @debug string("Optimizing with: ", solver)
 
     # only works with hypercube for now
     @assert problem.input isa Hyperrectangle

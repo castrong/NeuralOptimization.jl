@@ -14,7 +14,7 @@ Sound and complete.
 """
 @with_kw struct VanillaMIP
     optimizer = GLPK.Optimizer
-    output_flag = 1 # output flag for JuMP model initialization
+    output_flag = 0 # output flag for JuMP model initialization
     threads = 1 # threads to use in the solver
     m::Float64 = 1.0e4  # The big M in the linearization
 end
@@ -25,7 +25,7 @@ function to_string(solver::LBFGS)
 end
 
 function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem, time_limit::Int = 1200)
-    @debug "Optimizing with VanillaMIP"
+    @debug string("Optimizing with: ", solver)
     model = Model(solver)
     neurons = init_neurons(model, problem.network)
     deltas = init_deltas(model, problem.network)
@@ -61,11 +61,13 @@ function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem, time_l
 end
 
 function Base.show(io::IO, solver::VanillaMIP)
-    optimizer_string = "otheroptimizer"
+        optimizer_string = "otheroptimizer"
     if solver.optimizer == GLPK.Optimizer
+        threads_string =""
         optimizer_string = "GLPK"
     elseif solver.optimizer == Gurobi.Optimizer
+        threads_string = string(solver.threads, "threads_", )
         optimizer_string = "Gurobi"
     end
-    print(io, string("VanillaMIP_", optimizer_string, "_", string(solver.threads), "threads_", string(solver.m), "m"))
+    print(io, string("VanillaMIP", optimizer_string, "_", threads_string, string(solver.m), "m"))
 end

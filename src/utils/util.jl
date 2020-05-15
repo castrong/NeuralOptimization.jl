@@ -109,8 +109,7 @@ function write_nnet(fname::String, network::Network)
                 end
                 write(f, "\n")
             end
-
-
+            
             # Write the current bias
             bias = layer.bias
             for i = 1:length(bias)

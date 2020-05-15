@@ -17,7 +17,7 @@ Approximate
 end
 
 function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
-    @debug "Optimizing with LBFGS"
+    @debug string("Optimizing with: ", solver)
     # Assert the problem takes the necessary format
     # restriction from Optim, where we're getting our implementation
     # of LBFGS, focusing on box constrained problems
