@@ -9,26 +9,32 @@ using LazySets
 =#
 comma_replacement = "[-]" # has to match with the comma replacement in BenchmarkFileWriters.jl!!!
 
+println("Arg in : ", ARGS[1])
+
+# take in a single argument which holds your arguments comma separated
+args = split(ARGS[1], ",")
+
+
 # Optimizer name and optimizer itself
-optimizer_name = ARGS[1]
-optimizer_string = ARGS[2]
+optimizer_name = args[1]
+optimizer_string = args[2]
 optimizer = NeuralOptimization.parse_optimizer(optimizer_string)
 
 # Class of problem, network file, input file
-class = ARGS[3]
-network_file = ARGS[4]
-input_file = ARGS[5]
+class = args[3]
+network_file = args[4]
+input_file = args[5]
 
 # Radii of our hyperrectangle, objective function
-delta_list = parse.(Float64, split(ARGS[6][2:end-1], comma_replacement))
-objective_variables = parse.(Int, split(ARGS[7][2:end-1], comma_replacement)) # clip off the [] in the list, then split based on commas, then parse to an int
-objective_coefficients = parse.(Float64, split(ARGS[8][2:end-1], comma_replacement))
+delta_list = parse.(Float64, split(args[6][2:end-1], comma_replacement))
+objective_variables = parse.(Int, split(args[7][2:end-1], comma_replacement)) # clip off the [] in the list, then split based on commas, then parse to an int
+objective_coefficients = parse.(Float64, split(args[8][2:end-1], comma_replacement))
 objective = NeuralOptimization.LinearObjective(objective_coefficients, objective_variables)
+timeout = 10 # hard coded for now 
 
 # Whether to maximize or minimize and our output filename
-maximize = ARGS[9] == "maximize" ? true : false
-output_file = ARGS[10]
-timeout = parse(Int, ARGS[11])
+maximize = args[9] == "maximize" ? true : false
+output_file = args[10]
 # Make the path to your output file if it doesnt exist
 mkpath(dirname(output_file))
 
@@ -52,6 +58,7 @@ println("Name: ", optimizer_name)
 println("Result objective value: ", result.objective_value)
 println("Elapsed time: ", elapsed_time)
 
+output_file = string(output_file, ".csv") # add on the .csv
 open(output_file, "w") do f
     # Writeout our results
     write(f,
