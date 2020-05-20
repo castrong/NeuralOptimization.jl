@@ -15,23 +15,31 @@
  ** [[ Add lengthier description here ]]
  **/
 '''
-
-#Marabou File
-from .MarabouNetworkNNet import *
-from .MarabouNetworkTF import *
-#from .MarabouNetworkONNX import *
+import warnings
 from .MarabouCore import *
+from .MarabouNetworkNNet import *
 
-def read_nnet(filename, sbt=False):
+# Import parsers if required packages are installed
+try:
+    from .MarabouNetworkTF import *
+except ImportError:
+    warnings.warn("Tensorflow parser is unavailable because tensorflow package is not installed")
+try:
+    from .MarabouNetworkONNX import *
+except ImportError:
+    warnings.warn("ONNX parser is unavailable because onnx or onnxruntime packages are not installed")
+
+def read_nnet(filename, use_nlr=False):
     """
     Constructs a MarabouNetworkNnet object from a .nnet file
 
     Args:
         filename: (string) path to the .nnet file.
+        use_nlr: (bool) Set to true to use NetworkLevelReasoner
     Returns:
         marabouNetworkNNet: (MarabouNetworkNNet) representing network
     """
-    return MarabouNetworkNNet(filename, perform_sbt=sbt)
+    return MarabouNetworkNNet(filename, use_nlr=use_nlr)
 
 
 def read_tf(filename, inputNames=None, outputName=None, savedModel=False, savedModelTags=[]):
@@ -79,7 +87,7 @@ def solve_query(ipq, filename="", verbose=True, timeout=0, verbosity=2):
     """
     Function to solve query represented by this network
     Arguments:
-        ipq: (MarabouCore.InputQuery) InputQuery object, which can be obtained from 
+        ipq: (MarabouCore.InputQuery) InputQuery object, which can be obtained from
                 MarabouNetwork.getInputQuery or load_query
         filename: (string) path to redirect output to
         timeout: (int) time in seconds when Marabou will time out
@@ -100,9 +108,9 @@ def solve_query(ipq, filename="", verbose=True, timeout=0, verbosity=2):
         if stats.hasTimedOut():
             print ("TIMEOUT")
         elif len(vals)==0:
-            print("UNSAT")
+            print("unsat")
         else:
-            print("SAT")
+            print("sat")
             for i in range(ipq.getNumInputVariables()):
                 print("input {} = {}".format(i, vals[ipq.inputVariableByIndex(i)]))
             for i in range(ipq.getNumOutputVariables()):

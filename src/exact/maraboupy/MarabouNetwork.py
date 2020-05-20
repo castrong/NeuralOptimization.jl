@@ -44,6 +44,7 @@ class MarabouNetwork:
         self.inputVars = []
         self.outputVars = np.array([])
         self.optimizationVariable = -1
+        self.use_nlr = False
 
     def getNewVariable(self):
         """
@@ -202,22 +203,26 @@ class MarabouNetwork:
                     to how an input query was solved.
         """
         ipq = self.getMarabouQuery(options._optimize)
+
         if options == None:
             options = MarabouCore.Options()
+        ipq.setDivideStrategy(options._divideStrategy)
         vals, stats = MarabouCore.solve(ipq, options, filename)
         if verbose:
             if stats.hasTimedOut():
                 print("TO")
             elif len(vals)==0:
-                print("UNSAT")
+                print("unsat")
             else:
-                print("SAT")
-                for j in range(len(self.inputVars)):
-                    for i in range(self.inputVars[j].size):
-                        print("input {} = {}".format(i, vals[self.inputVars[j].item(i)]))
+                print("sat")
+                print("verbosity: ", options._verbosity)
+                if (options._verbosity > 0):
+                    for j in range(len(self.inputVars)):
+                        for i in range(self.inputVars[j].size):
+                            print("input {} = {}".format(i, vals[self.inputVars[j].item(i)]))
 
-                for i in range(self.outputVars.size):
-                    print("output {} = {}".format(i, vals[self.outputVars.item(i)]))
+                    for i in range(self.outputVars.size):
+                        print("output {} = {}".format(i, vals[self.outputVars.item(i)]))
 
         return [vals, stats]
 
