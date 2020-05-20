@@ -10,8 +10,7 @@ using LazySets
 comma_replacement = "[-]" # has to match with the comma replacement in BenchmarkFileWriters.jl!!!
 
 # take in a single argument which holds your arguments comma separated
-args = split(ARGS[1], ",")
-
+args = string.(split(ARGS[1], ",")) # string. to convert from substring to string
 
 # Optimizer name and optimizer itself
 optimizer_name = args[1]
