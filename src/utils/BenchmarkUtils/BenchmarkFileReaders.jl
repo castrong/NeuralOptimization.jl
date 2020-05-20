@@ -14,10 +14,6 @@ function run_query_file(query_file)
     for query in queries
         # 11 args
         # optimizer_name,  optimizer, class, network_file, input_file, delta, objective_variables, objective_coefficients, maximize, query_output_filename, timeout
-
-        query = replace(query, " "=>"")
-        query = replace(query, ".csv"=>"")
-        println("Running query: ", query)
         mycommand = `sh /Users/cstrong/Desktop/Stanford/Research/NeuralOptimization.jl/src/utils/BenchmarkUtils/RunQuery.sh $query`
         run(mycommand)
     end

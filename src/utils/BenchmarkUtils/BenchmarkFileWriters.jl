@@ -32,9 +32,9 @@ function write_benchmark_file(class_string, network_files, input_files, objectiv
                           class_string, ",",
                           network_file, ",",
                           input_file, ",",
-                          replace(string(delta_list), ","=>comma_replacement), ",",
-                          replace(string(objective_function.variables), ","=>comma_replacement), ",",
-                          replace(string(objective_function.coefficients), ","=>comma_replacement), ",",
+                          replace(string(delta_list), ","=>comma_replacement, " "=>""), ",",
+                          replace(string(objective_function.variables), ","=>comma_replacement, " "=>""), ",",
+                          replace(string(objective_function.coefficients), ","=>comma_replacement, " "=>""), ",",
                           maximize ? "maximize" : "minimize", "\n"
                           )
                     close(f)
@@ -92,7 +92,7 @@ function write_query_file(benchmark_file, optimizer_file, query_result_path, out
         query_parts[5] = basename(query_parts[5])[1:end-4] # TODO: Make this more rigorous - find the input file basename to use in our output file, remove file extension
         query_parts[6] = split(query_parts[6][2:end], comma_replacement)[1] # TODO: How to deal with names of deltas? replace list of deltas with the first delta for now
         deleteat!(query_parts, [2]) # remove optimizer full description from filename, can use the optimizer name
-        query_output_filename = string(query_result_path, join(query_parts, "-"), ".csv")
+        query_output_filename = string(query_result_path, join(query_parts, "-"))
 
         open(output_file, file_mode) do f
             write(f, cur_query, ",", query_output_filename, "\n")
