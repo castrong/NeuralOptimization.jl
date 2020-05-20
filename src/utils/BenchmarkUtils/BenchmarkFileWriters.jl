@@ -28,13 +28,20 @@ function write_benchmark_file(class_string, network_files, input_files, objectiv
                 first_loop = false
                 open(output_file, file_mode) do f
                     # Writeout each column separated by a comma
+                    # for each of the lists, we replace their commas and remove all spaces 
+                    delta_list_string = replace(string(delta_list), ","=>comma_replacement)
+                    delta_list_string = replace(delta_list_string, " "=>"")
+                    objective_variables_string = replace(string(objective_function.variables), ","=>comma_replacement)
+                    objective_variables_string = replace(objective_variables_string, " "=>"")
+                    objective_coefficients_string = replace(string(objective_function.coefficients), ","=>comma_replacement)
+                    objective_coefficients_string = replace(objective_coefficients_string, " "=>"")
                     write(f,
                           class_string, ",",
                           network_file, ",",
                           input_file, ",",
-                          replace(string(delta_list), ","=>comma_replacement, " "=>""), ",",
-                          replace(string(objective_function.variables), ","=>comma_replacement, " "=>""), ",",
-                          replace(string(objective_function.coefficients), ","=>comma_replacement, " "=>""), ",",
+                          delta_list_string, ",",
+                          objective_variables_string, ",",
+                          objective_coefficients_string, ",",
                           maximize ? "maximize" : "minimize", "\n"
                           )
                     close(f)
