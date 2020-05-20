@@ -9,8 +9,6 @@ using LazySets
 =#
 comma_replacement = "[-]" # has to match with the comma replacement in BenchmarkFileWriters.jl!!!
 
-println("Arg in : ", ARGS[1])
-
 # take in a single argument which holds your arguments comma separated
 args = split(ARGS[1], ",")
 
@@ -30,7 +28,7 @@ delta_list = parse.(Float64, split(args[6][2:end-1], comma_replacement))
 objective_variables = parse.(Int, split(args[7][2:end-1], comma_replacement)) # clip off the [] in the list, then split based on commas, then parse to an int
 objective_coefficients = parse.(Float64, split(args[8][2:end-1], comma_replacement))
 objective = NeuralOptimization.LinearObjective(objective_coefficients, objective_variables)
-timeout = 10 # hard coded for now 
+timeout = 10 # hard coded for now
 
 # Whether to maximize or minimize and our output filename
 maximize = args[9] == "maximize" ? true : false
