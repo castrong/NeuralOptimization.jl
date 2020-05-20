@@ -135,7 +135,13 @@ function ns_verify(solver::Sherlock, network, input_set, output_set, start_time:
     encode_network!(model, network, neurons, deltas, MixedIntegerLP(solver.m))
     feasibility_problem!(model)
 
-    set_time_limit_sec(model, trunc(Int32, time_limit - (time() - start_time)))
+    # Exit early if we've reached the time limit
+    time_remaining = time_limit - (time() - start_time)
+    if (time_remaining <= 0)
+        return TIME_LIMIT, TIME_LIMIT
+    end
+
+    set_time_limit_sec(model, trunc(Int32, time_remaining))
     optimize!(model)
     if termination_status(model) == OPTIMAL
         return :violated, value.(first(neurons))
