@@ -1,5 +1,6 @@
 include("../../NeuralOptimization.jl")
 include("../CreateAllOptimizers.jl")
+comma_replacement = "[-]" # has to match with the comma replacement in BenchmarkFileWriters.jl!!!
 
 #=
 Run a set of queries given by a query file. This just consists of a loop
@@ -11,7 +12,6 @@ to running on a cluster where this command would get more complicated
 function run_query_file(query_file)
     queries = readlines(query_file)
     for query in queries
-        replace(query, comma_replacement=>",")
         args = split(query, ",")
         # 11 args
         # optimizer_name,  optimizer, class, network_file, input_file, delta, objective_variables, objective_coefficients, maximize, query_output_filename, timeout
@@ -21,5 +21,5 @@ function run_query_file(query_file)
 end
 
 
-query_file ="./BenchmarkOutput/benchmark_files/test_queries.csv"
+query_file ="/Users/cstrong/Desktop/Stanford/Research/NeuralOptimization.jl/BenchmarkOutput/benchmark_files/test_queries.csv"
 run_query_file(query_file)
