@@ -18,8 +18,8 @@ Sound and complete
 """
 @with_kw struct MarabouBinarySearch
     optimizer = GLPK.Optimizer # To find a feasible original point
-    use_sbt = false
-	divide_strategy = "ReLUViolation"
+    usesbt = false
+	dividestrategy = "ReLUViolation"
 end
 
 function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProblem, time_limit::Int = 1200)
@@ -51,7 +51,7 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
 	# Write the network then run the solver
 	network_file = "./src/utils/temp_files_for_transfer/temp_marabou_network.nnet"
 	write_nnet(network_file, augmented_network)
-	(status, input_val, obj_val) = py"""marabou_binarysearch_python"""(A, b, feasible_val, network_file, solver.use_sbt, solver.divide_strategy, time_limit)
+	(status, input_val, obj_val) = py"""marabou_binarysearch_python"""(A, b, feasible_val, network_file, solver.usesbt, solver.dividestrategy, time_limit)
 
 	# Turn the string status into a symbol to return
     if (status == "success")
@@ -215,6 +215,5 @@ function init_marabou_binary_function()
 end
 
 function Base.show(io::IO, solver::MarabouBinarySearch)
-    sbt_string = solver.use_sbt ? "sbt" : "nosbt"
-    print(io, string("MarabouBinarySearch_", sbt_string, "_", solver.divide_strategy))
+	print(io, string("MarabouBinarySearch_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy))
 end

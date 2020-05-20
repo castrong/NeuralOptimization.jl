@@ -109,7 +109,7 @@ function write_nnet(fname::String, network::Network)
                 end
                 write(f, "\n")
             end
-            
+
             # Write the current bias
             bias = layer.bias
             for i = 1:length(bias)
@@ -162,6 +162,60 @@ function linear_objective_to_weight_vector(objective::LinearObjective, n::Int)
     weight_vector = zeros(n)
     weight_vector[objective.variables] = objective.coefficients;
     return weight_vector
+end
+
+function parse_optimizer(optimizer_string)
+    println("Optimizer string: ", optimizer_string)
+    chunks = split(optimizer_string, "_")
+    optimizer_type = chunks[1]
+    chunks = split(optimizer_string, "_") # optimizer type, followed by arguments separated by _
+    if (optimizer_type == "Marabou")
+        sbt_string = split(chunks[2], "=")[2]
+        sbt = parse(Bool, sbt_string)
+        dividestrategy = split(chunks[3], "=")[2]
+        return NeuralOptimization.Marabou(usesbt=sbt, dividestrategy=dividestrategy)
+    elseif (optimizer_type == "MarabouBinarySearch")
+        sbt_string = split(chunks[2], "=")[2]
+        sbt = parse(Bool, sbt_string)
+        dividestrategy = split(chunks[3], "=")[2]
+        return NeuralOptimization.Marabou(usesbt=sbt, dividestrategy=dividestrategy)
+    elseif (optimizer_type == "Sherlock")
+        backend_optimizer_string = split(chunks[2], "=")[2]
+        threads_string = split(chunks[3], "=")[2]
+        m_string = split(chunks[4], "=")[2]
+        @assert backend_optimizer_string == "Gurobi.Optimizer" or backend_optimizer_string == "GLPK.Optimizer"
+        if backend_optimizer_string == "Gurobi.optimizer"
+            backend = Gurobi.Optimizer
+            threads = parse(Int, threads_string)
+            m = parse(Float32, m_string)
+            return NeuralOptimization.Sherlock(optimizer=backend, threads=threads, m=m)
+        else
+            backend = GLPK.Optimizer
+            m = parse(Float32, m_string)
+            return NeuralOptimization.Sherlock(optimizer=backend, m=m)
+        end
+    elseif (optimizer_type == "VanillaMIP")
+        backend_optimizer_string = split(chunks[2], "=")[2]
+        threads_string = split(chunks[3], "=")[2]
+        m_string = split(chunks[4], "=")[2]
+        @assert backend_optimizer_string == "Gurobi.Optimizer" or backend_optimizer_string == "GLPK.Optimizer"
+        if backend_optimizer_string == "Gurobi.optimizer"
+            backend = Gurobi.Optimizer
+            threads = parse(Int, threads_string)
+            m = parse(Float32, m_string)
+            return NeuralOptimization.VanillaMIP(optimizer=backend, threads=threads, m=m)
+        else
+            backend = GLPK.Optimizer
+            m = parse(Float32, m_string)
+            return NeuralOptimization.VanillaMIP(optimizer=backend, m=m)
+        end
+    elseif (optimizer_type == "LBFGS")
+        return NeuralOptimization.LBFGS()
+    elseif (optimizer_type == "FGSM")
+        return NeuralOptimization.FGSM()
+    elseif (optimizer_type == "PGD")
+        return NeuralOptimization.PGD()
+    end
 end
 
 """

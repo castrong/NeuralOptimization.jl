@@ -24,7 +24,7 @@ Sound but not complete.
 [https://github.com/souradeep-111/sherlock](https://github.com/souradeep-111/sherlock)
 """
 @with_kw struct Sherlock
-    m = 1e3
+    m = 1.0e6
     optimizer = GLPK.Optimizer
     output_flag = 1 # output flag for JuMP model initialization
     threads = 1 # threads to use in the solver
@@ -152,11 +152,9 @@ end
 function Base.show(io::IO, solver::Sherlock)
     optimizer_string = "otheroptimizer"
     if solver.optimizer == GLPK.Optimizer
-        threads_string =""
-        optimizer_string = "GLPK"
+        optimizer_string = "GLPK.Optimizer"
     elseif solver.optimizer == Gurobi.Optimizer
-        threads_string = string(solver.threads, "threads_", )
-        optimizer_string = "Gurobi"
+        optimizer_string = "Gurobi.Optimizer"
     end
-    print(io, string("Sherlock_", optimizer_string, "_", threads_string, string(solver.m), "m"))
+    print(io, string("Sherlock_", "optimizer=", optimizer_string, "_", "threads=", string(solver.threads), "_m=", string(solver.m)))
 end

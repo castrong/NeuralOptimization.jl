@@ -14,9 +14,9 @@ Sound and complete.
 """
 @with_kw struct VanillaMIP
     optimizer = GLPK.Optimizer
-    output_flag = 0 # output flag for JuMP model initialization
+    output_flag = 1 # output flag for JuMP model initialization
     threads = 1 # threads to use in the solver
-    m::Float64 = 1.0e4  # The big M in the linearization
+    m::Float64 = 1.0e6  # The big M in the linearization
 end
 
 function to_string(solver::LBFGS)
@@ -46,7 +46,7 @@ function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem, time_l
     set_time_limit_sec(model, time_limit)
 
     optimize!(model)
-    @debug termination_status(model)
+    @debug "Termination status: " termination_status(model)
 
     if (termination_status(model) == OPTIMAL)
         @debug "VanillaMIP Returned Optimal"
@@ -55,19 +55,17 @@ function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem, time_l
         @debug "VanillaMIP Timed Out"
         return Result(:timeout, [-1.0], -1.0)
     else
-        @debug "VanillaMIP Errored"
+        @debug "VanillaMIP Errored - infeasible or unbounded possible"
         return Result(:error, [-1.0], -1.0)
     end
 end
 
 function Base.show(io::IO, solver::VanillaMIP)
-        optimizer_string = "otheroptimizer"
+    optimizer_string = "otheroptimizer"
     if solver.optimizer == GLPK.Optimizer
-        threads_string =""
-        optimizer_string = "GLPK"
+        optimizer_string = "GLPK.Optimizer"
     elseif solver.optimizer == Gurobi.Optimizer
-        threads_string = string(solver.threads, "threads_", )
-        optimizer_string = "Gurobi"
+        optimizer_string = "Gurobi.Optimizer"
     end
-    print(io, string("VanillaMIP", optimizer_string, "_", threads_string, string(solver.m), "m"))
+    print(io, string("VanillaMIP_", "optimizer=", optimizer_string, "_", "threads=", string(solver.threads), "_m=", string(solver.m)))
 end

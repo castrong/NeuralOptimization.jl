@@ -35,8 +35,8 @@ complement(P::LazySet) = PolytopeComplement(P)
 
 # Linear objective on the output variables
 struct LinearObjective{N<: Number}
-	coefficients::Vector{N}
 	# Defined as the indices of the output layer corresponding to the coefficients
+	coefficients::Vector{N}
 	variables::Vector{Int}
 end
 
@@ -46,7 +46,7 @@ function Base.show(io::IO, objective::LinearObjective)
     for (coefficient, variable) in zip(objective.coefficients, objective.variables)
 		print(io, coefficient, "*y", variable)
 		if (index != length(objective.coefficients))
-			print(io, " + ")
+			print(io, "+")
 		end
 		index = index + 1
 	end

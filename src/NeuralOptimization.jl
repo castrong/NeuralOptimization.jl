@@ -14,6 +14,7 @@ using Printf # For writing out .nnet files
 using NPZ # For reading and writing .npy files
 using PyCall # For Marabou, also to read .npz with certain data types unsupported by NPZ
 using BenchmarkTools # For our benchmark timing
+using JSON3 # For benchmarking, writing optimizers to file
 
 # Python libraries that we'll need for Marabou
 py"""
@@ -44,15 +45,18 @@ import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE, JuMP.MOI.TIME_LIMIT
 # TODO: What should this be like long term? want to have a clean process
 # of specifying things but they're not supported by all optimizers
 function model_creator(solver)
+    println("In model creator!!!!!!!!")
     if (solver.optimizer == Gurobi.Optimizer)
-        print("in here")
+        println("Creating Gurobi model")
+        println("Threads: ", solver.threads)
         print(solver)
         return Model(with_optimizer(solver.optimizer, OutputFlag=solver.output_flag, Threads=solver.threads))
     else
+        println("Creating optimizer not Gurobi")
         return Model(with_optimizer(solver.optimizer))
     end
 end
-JuMP.Model(solver) = Model(with_optimizer(solver.optimizer))#model_creator(solver)
+JuMP.Model(solver) = model_creator(solver)
 
 JuMP.value(vars::Vector{VariableRef}) = value.(vars)
 

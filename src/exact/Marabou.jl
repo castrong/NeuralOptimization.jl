@@ -15,10 +15,13 @@ Branch and bound with bound tightening at each step in the simplex
 Sound and complete
 
 """
-@with_kw struct Marabou
-    use_sbt = false
-	divide_strategy = "ReLUViolation"
+@with_kw mutable struct Marabou
+    usesbt::Bool = false
+	dividestrategy = "ReLUViolation"
+	Marabou(a,b) where {R} = new(a, b) #
 end
+JSON3.StructTypes.StructType(::Type{Marabou}) = StructTypes.Mutable()
+
 
 function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 1200)
 	@debug string("Optimizing with: ", solver)
@@ -47,7 +50,7 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
 	# Write the network then run the solver
 	network_file = "./src/utils/temp_files_for_transfer/temp_marabou_network.nnet"
 	write_nnet(network_file, augmented_problem.network)
-	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.use_sbt, solver.divide_strategy, time_limit)
+	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, time_limit)
 
 	# Turn the string status into a symbol to return
     if (status == "success")
@@ -171,6 +174,5 @@ function init_marabou_function()
 end
 
 function Base.show(io::IO, solver::Marabou)
-    sbt_string = solver.use_sbt ? "sbt" : "nosbt"
-	print(io, string("Marabou", sbt_string, "_", solver.divide_strategy))
+	print(io, string("Marabou_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy))
 end
