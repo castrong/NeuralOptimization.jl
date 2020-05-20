@@ -49,7 +49,7 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
 	A, b = tosimplehrep(problem.input)
 
 	# Write the network then run the solver
-	network_file = "./src/utils/temp_files_for_transfer/temp_marabou_network.nnet"
+    network_file = string(tempname(), ".nnet")
 	write_nnet(network_file, augmented_network)
 	(status, input_val, obj_val) = py"""marabou_binarysearch_python"""(A, b, feasible_val, network_file, solver.usesbt, solver.dividestrategy, time_limit)
 

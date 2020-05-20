@@ -20,10 +20,8 @@ Sound and complete
 	dividestrategy = "ReLUViolation"
 	Marabou(a,b) where {R} = new(a, b) #
 end
-JSON3.StructTypes.StructType(::Type{Marabou}) = StructTypes.Mutable()
 
-
-function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 1200)
+function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 30)
 	@debug string("Optimizing with: ", solver)
     @assert problem.input isa Hyperrectangle or problem.input isa HPolytope
 	init_marabou_function()
@@ -48,7 +46,7 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
     end
 
 	# Write the network then run the solver
-	network_file = "./src/utils/temp_files_for_transfer/temp_marabou_network.nnet"
+	network_file = string(tempname(), ".nnet")
 	write_nnet(network_file, augmented_problem.network)
 	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, time_limit)
 
