@@ -36,10 +36,10 @@ function optimize(solver::FGSM, problem::Problem, time_limit::Int = 1200)
     # this is our objective - FGSM tries to maximize the cost so we're framing our objective as the cost
     cost_function = (x, y) -> (reshape(weight_vector, 1, num_outputs) * reshape(flux_model(x), num_outputs, 1))[1]
     if (problem.max)
-        x_adv = Adversarial.FGSM(flux_model, (x, y)->cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(0,1))
+        x_adv = Adversarial.FGSM(flux_model, (x, y)->cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(-Inf,Inf))
         obj_val = cost_function(x_adv, -1)
     else
-        x_adv = Adversarial.FGSM(flux_model, (x, y)->-cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(0,1))
+        x_adv = Adversarial.FGSM(flux_model, (x, y)->-cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(-Inf,Inf))
         obj_val = cost_function(x_adv, -1)
     end
     return Result(:success, x_adv, obj_val)
