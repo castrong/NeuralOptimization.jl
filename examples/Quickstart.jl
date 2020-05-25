@@ -16,7 +16,7 @@ input = NeuralOptimization.Hyperrectangle(low=0.4 * ones(num_inputs), high=0.6 *
 objective = NeuralOptimization.LinearObjective([1.0], [1]) # objective is to just maximize the output
 max = true
 
-problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max)
+problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, max, -Inf, Inf)
 result = NeuralOptimization.optimize(optimizer, problem)
 println("Status: ", result.status, " Optimal Value: ", result.objective_value)
 

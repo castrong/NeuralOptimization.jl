@@ -49,7 +49,7 @@ optimizers = [VanillaMIP_GLPK_optimizer]
 # optimizers = [LBFGS_optimizer,
 #               PGD_optimizer,
 #               FGSM_optimizer,
-#               Marabou_optimizer_ReLUViolation,
+               Marabou_optimizer_ReLUViolation,
 #               Marabou_optimizer_sbt_ReLUViolation,
 #               Marabou_optimizer_earliestReLU,
 #               Marabou_optimizer_sbt_earliestReLU,
@@ -69,7 +69,7 @@ input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], input_radius * o
 objective = NeuralOptimization.LinearObjective([1.0], [1]) # objective is to just maximize the first output
 maximize = true
 
-problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize)
+problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize, -Inf, Inf)
 
 # Run each optimizer and save results
 results = []
