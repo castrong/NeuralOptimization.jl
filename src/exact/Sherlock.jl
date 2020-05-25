@@ -40,7 +40,7 @@ function optimize(solver::Sherlock, problem::OutputOptimizationProblem, time_lim
     # if the last layer was ID() then this just combines the objective into that layer
     augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
     augmented_objective = LinearObjective([1.0], [1])
-    augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max)
+    augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper)
 
     if (problem.max)
         (x_u, u) = output_bound(solver, augmented_problem, :max, start_time, time_limit)
@@ -99,6 +99,12 @@ function local_search(solver::Sherlock, problem::OutputOptimizationProblem, x::V
     o = gradient * neurons[1]
     index = ifelse(type == :max, 1, -1)
     @objective(model, Max, index * o[1])
+
+    # Exit early if we've reached the time limit
+    time_remaining = time_limit - (time() - start_time)
+    if (time_remaining <= 0)
+        return TIME_LIMIT, TIME_LIMIT
+    end
 
     set_time_limit_sec(model, trunc(Int, time_limit - (time() - start_time)))
     optimize!(model)

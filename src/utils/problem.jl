@@ -81,6 +81,8 @@ struct OutputOptimizationProblem{P} <: Problem
     input::P
 	objective::LinearObjective
 	max::Bool
+	lower::Float64
+	upper::Float64
 end
 
 # A problem based on finding the minimum perturbation to the input
@@ -90,6 +92,8 @@ struct MinPerturbationProblem{P, N<: Number} <: Problem
 	center_input::Vector{N}
 	output::HPolytope
 	objective::Symbol # can be :linf
+	lower::Float64
+	upper::Float64
 end
 
 

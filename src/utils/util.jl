@@ -183,8 +183,8 @@ function parse_optimizer(optimizer_string)
         backend_optimizer_string = split(chunks[2], "=")[2]
         threads_string = split(chunks[3], "=")[2]
         m_string = split(chunks[4], "=")[2]
-        @assert backend_optimizer_string == "Gurobi.Optimizer" or backend_optimizer_string == "GLPK.Optimizer"
-        if backend_optimizer_string == "Gurobi.optimizer"
+        @assert backend_optimizer_string == "Gurobi.Optimizer" || backend_optimizer_string == "GLPK.Optimizer"
+        if backend_optimizer_string == "Gurobi.Optimizer"
             backend = Gurobi.Optimizer
             threads = parse(Int, threads_string)
             m = parse(Float32, m_string)
@@ -199,7 +199,7 @@ function parse_optimizer(optimizer_string)
         threads_string = split(chunks[3], "=")[2]
         m_string = split(chunks[4], "=")[2]
         @assert backend_optimizer_string == "Gurobi.Optimizer" || backend_optimizer_string == "GLPK.Optimizer"
-        if backend_optimizer_string == "Gurobi.optimizer"
+        if backend_optimizer_string == "Gurobi.Optimizer"
             backend = Gurobi.Optimizer
             threads = parse(Int, threads_string)
             m = parse(Float32, m_string)

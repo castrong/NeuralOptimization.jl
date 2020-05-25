@@ -46,7 +46,7 @@ num_inputs = size(network.layers[1].weights, 2)
 # Create the problem: network, input constraint, objective, maximize or minimize
 center_input = npzread(input_file)
 input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], delta_list) # center and radius
-problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize)
+problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize, -Inf, Inf)
 
 # Parse the optimizer
 elapsed_time = @elapsed result = NeuralOptimization.optimize(optimizer, problem, timeout)

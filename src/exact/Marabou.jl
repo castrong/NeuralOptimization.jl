@@ -33,7 +33,7 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
         @debug "In Marabou incorporating into single output layer"
         augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
         augmented_objective = LinearObjective([1.0], [1])
-        augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max)
+        augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper)
     else
         augmented_problem = problem
     end
@@ -117,7 +117,7 @@ function init_marabou_function()
 		# Set the options
 		options = MarabouCore.Options()
 		options._optimize = True
-		options._verbosity = 0
+		options._verbosity = 1
 		options._timeoutInSeconds = timeout
 		# Parse the divide strategy from a string to its corresponding enum
 		if (divide_strategy == "EarliestReLU"):

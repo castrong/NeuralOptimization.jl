@@ -14,7 +14,6 @@ using Printf # For writing out .nnet files
 using NPZ # For reading and writing .npy files
 using PyCall # For Marabou, also to read .npz with certain data types unsupported by NPZ
 using BenchmarkTools # For our benchmark timing
-using JSON3 # For benchmarking, writing optimizers to file
 
 # Python libraries that we'll need for Marabou
 py"""
@@ -28,9 +27,9 @@ from maraboupy import MarabouUtils
 """
 
 # We have to pin an old version of Flux to get it to work with Adversarial.jl
-Pkg.free("Flux")
-Pkg.add(Pkg.PackageSpec(name="Flux", version="0.8.3"))
-Pkg.pin(Pkg.PackageSpec(name="Flux", version="0.8.3"))
+# Pkg.free("Flux")
+# Pkg.add(Pkg.PackageSpec(name="Flux", version="0.8.3"))
+# Pkg.pin(Pkg.PackageSpec(name="Flux", version="0.8.3"))
 using Flux;
 
 Pkg.add(Pkg.PackageSpec(url="https://github.com/jaypmorgan/Adversarial.jl.git")); # Adversarial.jl
@@ -42,6 +41,7 @@ import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
 # For optimization methods:
 import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE, JuMP.MOI.TIME_LIMIT
 
+println("Running neural optimization")
 # TODO: What should this be like long term? want to have a clean process
 # of specifying things but they're not supported by all optimizers
 function model_creator(solver)
@@ -50,10 +50,10 @@ function model_creator(solver)
         println("Creating Gurobi model")
         println("Threads: ", solver.threads)
         print(solver)
-        return Model(with_optimizer(solver.optimizer, OutputFlag=solver.output_flag, Threads=solver.threads))
+        return JuMP.Model(with_optimizer(solver.optimizer, OutputFlag=solver.output_flag, Threads=solver.threads))
     else
         println("Creating optimizer not Gurobi")
-        return Model(with_optimizer(solver.optimizer))
+        return JuMP.Model(with_optimizer(solver.optimizer))
     end
 end
 JuMP.Model(solver) = model_creator(solver)

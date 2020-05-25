@@ -13,7 +13,7 @@ class, network_file, center, input_file, delta_list, objective_variables, object
 The delta_list must be the length of the input (so that it can specify a hyperrectangle with different radius for
 each input
 =#
-function write_benchmark_file(class_string, network_files, input_files, objective_functionw, deltas, maximize, output_file, append_output=false)
+function write_benchmark_file(class_string, network_files, input_files, objective_functions, deltas, maximize, output_file, append_output=false)
     # Make the path to your output file if it doesnt exist
     mkpath(dirname(output_file))
     first_loop = true
