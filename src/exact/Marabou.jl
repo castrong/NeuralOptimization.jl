@@ -48,7 +48,7 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
 	# Write the network then run the solver
 	network_file = string(tempname(), ".nnet")
 	write_nnet(network_file, augmented_problem.network)
-	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, time_limit)
+	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, augmented_problem.lower, augmented_problem.upper, time_limit)
 
 	# Turn the string status into a symbol to return
     if (status == "success")
@@ -68,18 +68,21 @@ end
 
 function init_marabou_function()
 	py"""
-	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, timeout):
+	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, timeout):
 		# Load in the network
 		network = Marabou.read_nnet(network_file, use_sbt)
 		inputVars = network.inputVars.flatten()
 		numInputs = len(inputVars)
 
+		# Set upper and lower on all input variables
+		for var in network.inputVars.flatten():
+		    network.setLowerBound(var, lower)
+		    network.setUpperBound(var, upper)
+
 		# # Add input constraints
 		for row_index in range(A.shape[0]):
-
 			input_constraint_equation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
 			input_constraint_equation.setScalar(b[row_index])
-
 			# First check if this row corresponds to an upper or lower bound on a variable
 			# it will be more efficient to store them in this way
 			all_weights_mag_1 = True
@@ -98,9 +101,9 @@ function init_marabou_function()
 
 			if (all_weights_mag_1 and num_weights == 1):
 				if (mag_weight == 1):
-					network.setUpperBound(inputVars[index], b[row_index])
+					network.setUpperBound(inputVars[index], min(b[row_index], upper))
 				else:
-					network.setLowerBound(inputVars[index], -b[row_index])
+					network.setLowerBound(inputVars[index], max(-b[row_index], lower))
 
 			# If not, then this row corresponds to some other linear equation - so we'll encode that
 			else:

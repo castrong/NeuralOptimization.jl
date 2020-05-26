@@ -254,9 +254,23 @@ function add_set_constraint!(m::Model, set::Union{HPolytope, HalfSpace}, z::Vect
     return nothing
 end
 
+function add_set_constraint!(m::Model, set::Union{HPolytope, HalfSpace}, z::Vector{VariableRef}, lower::Float64, upper::Float64)
+    A, b = tosimplehrep(set)
+    @constraint(m, A * z .<= b)
+    @constraint(m, z .>= lower * ones(length(z)))
+    @constraint(m, z.<= upper * ones(length(z)))
+    return nothing
+end
+
 function add_set_constraint!(m::Model, set::Hyperrectangle, z::Vector{VariableRef})
     @constraint(m, z .<= high(set))
     @constraint(m, z .>= low(set))
+    return nothing
+end
+
+function add_set_constraint!(m::Model, set::Hyperrectangle, z::Vector{VariableRef}, lower::Float64, upper::Float64)
+    @constraint(m, z .<= min.(high(set), upper * ones(length(z))))
+    @constraint(m, z .>= max.(low(set), lower * ones(length(z))))
     return nothing
 end
 

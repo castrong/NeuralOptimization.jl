@@ -22,6 +22,7 @@ function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
     # restriction from Optim, where we're getting our implementation
     # of LBFGS, focusing on box constrained problems
     @assert problem.input isa Hyperrectangle
+    num_inputs = size(problem.network.layers[1].weights, 2)
 
     # Augment the network to handle an arbitrary linear objective
     # if the last layer was ID() then this just combines the objective into that layer
@@ -40,9 +41,9 @@ function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
     end
 
     input_set = augmented_problem.input
-    input_lower = input_set.center - input_set.radius;
-    input_upper = input_set.center + input_set.radius;
-    x_0 = input_set.center
+    input_lower = max.(input_set.center - input_set.radius, augmented_problem.lower * ones(num_inputs));
+    input_upper = min.(input_set.center + input_set.radius, augmented_problem.upper * ones(num_inputs));
+    x_0 = (input_lower + input_upper) / 2.0
 
     # Maximize
     if (augmented_problem.max)

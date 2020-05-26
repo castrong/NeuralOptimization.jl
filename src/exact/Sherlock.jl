@@ -42,7 +42,7 @@ function optimize(solver::Sherlock, problem::OutputOptimizationProblem, time_lim
     augmented_objective = LinearObjective([1.0], [1])
     augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper)
 
-    if (problem.max)
+    if (augmented_problem.max)
         (x_u, u) = output_bound(solver, augmented_problem, :max, start_time, time_limit)
         # If timed out, return a corresponding status - otherwise, return the result
         if (x_u == TIME_LIMIT)
@@ -92,9 +92,9 @@ function local_search(solver::Sherlock, problem::OutputOptimizationProblem, x::V
     nnet = problem.network
     act_pattern = get_activation(nnet, x)
     gradient = get_gradient(nnet, x)
-    model = Model(solver)
+    model = model_creator(solver)
     neurons = init_neurons(model, nnet)
-    add_set_constraint!(model, problem.input, first(neurons))
+    add_set_constraint!(model, problem.input, first(neurons), problem.lower, problem.upper)
     encode_network!(model, nnet, neurons, act_pattern, StandardLP())
     o = gradient * neurons[1]
     index = ifelse(type == :max, 1, -1)
@@ -121,7 +121,7 @@ function global_search(solver::Sherlock, problem::OutputOptimizationProblem, bou
     index = ifelse(type == :max, 1.0, -1.0)
     h = HalfSpace([index], index * bound)
     output_set = HPolytope([h])
-    result_status, result_x  = ns_verify(solver::Sherlock, problem.network, problem.input, output_set, start_time, time_limit)
+    result_status, result_x  = ns_verify(solver::Sherlock, problem.network, problem.input, output_set, start_time, problem.lower, problem.upper, time_limit)
     if result_status == :violated
         bound = compute_output(problem.network, result_x)
         return (result_x, bound[1], true)
@@ -132,11 +132,11 @@ function global_search(solver::Sherlock, problem::OutputOptimizationProblem, bou
     end
 end
 
-function ns_verify(solver::Sherlock, network, input_set, output_set, start_time::Float64, time_limit::Int)
-    model = Model(solver)
+function ns_verify(solver::Sherlock, network, input_set, output_set, start_time::Float64, lower::Float64, upper::Float64, time_limit::Int)
+    model = model_creator(solver)
     neurons = init_neurons(model, network)
     deltas = init_deltas(model, network)
-    add_set_constraint!(model, input_set, first(neurons))
+    add_set_constraint!(model, input_set, first(neurons), lower, upper)
     add_complementary_set_constraint!(model, output_set, last(neurons))
     encode_network!(model, network, neurons, deltas, MixedIntegerLP(solver.m))
     feasibility_problem!(model)

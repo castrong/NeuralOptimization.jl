@@ -15,11 +15,13 @@ nnet_file = "./Networks/MNIST/mnist10x10.nnet"
 network = NeuralOptimization.read_nnet(nnet_file)
 
 example_input = "./Datasets/MNIST/MNISTlabel_0_index_1_.npy"
-center_input = npzread(example_input) # Transpose for AutoTaxi - transpose(npzread(example_input))
+#center_input = npzread(example_input) # Transpose for AutoTaxi - transpose(npzread(example_input))
+center_input = ones(28*28)
+center_input[1:100] = zeros(1,100)
 #plot(Gray.(reshape(center_input, 28, 28)))
 # Visualize: plot(Gray.(reshape(center_input, __, __)))
 input_radius = 0.001
-time_limit = 5
+time_limit = 20
 
 # Create the optimizers
 
@@ -45,11 +47,11 @@ time_limit = 5
 # MarabouBinary_optimizer_sbt = NeuralOptimization.MarabouBinarySearch(usesbt=true, dividestrategy = "EarliestReLU")
 
 # List all your optimizers you'd like to run
-#optimizers = [MarabouBinary_optimizer, MarabouBinary_optimizer_sbt]
+#optimizers = [Sherlock_Gurobi_optimizer_1thread]
 optimizers = [
-              LBFGS_optimizer,
-              PGD_optimizer,
-              FGSM_optimizer,
+             LBFGS_optimizer,
+             PGD_optimizer,
+             FGSM_optimizer,
              Marabou_optimizer_ReLUViolation,
              Marabou_optimizer_sbt_ReLUViolation,
              Marabou_optimizer_earliestReLU,
@@ -64,7 +66,7 @@ optimizers = [
              Sherlock_Gurobi_optimizer_8threads,
              Sherlock_Gurobi_optimizer_1thread,
              Sherlock_GLPK_optimizer,
-              ]
+             ]
 # Create the problem: network, input constraints, output constraints, max vs. min
 num_inputs = size(network.layers[1].weights, 2)
 
@@ -72,7 +74,7 @@ input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], input_radius * o
 objective = NeuralOptimization.LinearObjective([1.0], [1]) # objective is to just maximize the first output
 maximize = true
 
-problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize, -Inf, Inf)
+problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize, 0.0, 1.0)
 
 # Run each optimizer and save results
 results = []
@@ -89,3 +91,6 @@ for (optimizer, result, time) in zip(optimizers, results, times)
     println("   Objective: ", result.objective_value)
     println("   Time: ", time)
 end
+
+println("Minimum: ", minimum(results[1].input))
+println("Maximum: ", maximum(results[1].input))

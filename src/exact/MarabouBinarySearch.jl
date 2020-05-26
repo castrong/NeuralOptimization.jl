@@ -28,9 +28,9 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
 	@time init_marabou_binary_function()
 
     # Find a feasible solution to pass it a lower bound
-    model = Model(solver)
+    model = model_creator(solver)
     input_vars = @variable(model, [i=1:size(problem.network.layers[1].weights, 2)])
-    add_set_constraint!(model, problem.input, input_vars)
+    add_set_constraint!(model, problem.input, input_vars, problem.lower, problem.upper)
     optimize!(model)
     @assert (value.(input_vars) ∈ problem.input)
 
@@ -51,7 +51,7 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
 	# Write the network then run the solver
     network_file = string(tempname(), ".nnet")
 	write_nnet(network_file, augmented_network)
-	(status, input_val, obj_val) = py"""marabou_binarysearch_python"""(A, b, feasible_val, network_file, solver.usesbt, solver.dividestrategy, time_limit)
+	(status, input_val, obj_val) = py"""marabou_binarysearch_python"""(A, b, feasible_val, network_file, solver.usesbt, solver.dividestrategy, problem.lower, problem.upper, time_limit)
 
 	# Turn the string status into a symbol to return
     if (status == "success")
@@ -81,10 +81,16 @@ end
 
 function init_marabou_binary_function()
 	py"""
-	def setup_network(network_file, A, b, use_sbt):
+	def setup_network(network_file, A, b, use_sbt, lower, upper):
 		network = Marabou.read_nnet(network_file, use_sbt)
 		inputVars = network.inputVars.flatten()
 		numInputs = len(inputVars)
+
+		# Set upper and lower on all input variables
+		for var in network.inputVars.flatten():
+		    network.setLowerBound(var, lower)
+		    network.setUpperBound(var, upper)
+
 		# # Add input constraints
 		for row_index in range(A.shape[0]):
 			input_constraint_equation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
@@ -107,9 +113,9 @@ function init_marabou_binary_function()
 
 			if (all_weights_mag_1 and num_weights == 1):
 				if (mag_weight == 1):
-					network.setUpperBound(inputVars[index], b[row_index])
+					network.setUpperBound(inputVars[index], min(b[row_index], upper))
 				else:
-					network.setLowerBound(inputVars[index], -b[row_index])
+					network.setLowerBound(inputVars[index], max(-b[row_index], lower))
 			# If not, then this row corresponds to some other linear equation - so we'll encode that
 			else:
 				print("Constraint not a lower / upper bound")
@@ -124,9 +130,9 @@ function init_marabou_binary_function()
 
 		return network, inputVars, numInputs
 
-	def marabou_binarysearch_python(A, b, lower_bound, network_file, use_sbt, divide_strategy, timeout):
+	def marabou_binarysearch_python(A, b, lower_bound, network_file, use_sbt, divide_strategy, lower, upper, timeout):
 		# Load in the network
-		network, inputVars, numInputs = setup_network(network_file, A, b, use_sbt)
+		network, inputVars, numInputs = setup_network(network_file, A, b, use_sbt, lower, upper)
 
 		# Setup options
 		options = MarabouCore.Options()

@@ -19,20 +19,19 @@ Sound and complete.
     m::Float64 = 1.0e6  # The big M in the linearization
 end
 
-function to_string(solver::LBFGS)
-
-    return
-end
-
 function optimize(solver::VanillaMIP, problem::OutputOptimizationProblem, time_limit::Int = 1200)
     @debug string("Optimizing with: ", solver)
-    model = Model(solver)
+    model = model_creator(solver)
     neurons = init_neurons(model, problem.network)
     deltas = init_deltas(model, problem.network)
     objective = problem.objective
+    num_inputs = size(problem.network.layers[1].weights, 2)
 
     encode_network!(model, problem.network, neurons, deltas, MixedIntegerLP(solver.m))
-    add_set_constraint!(model, problem.input, first(neurons))
+
+    # add lower and upper bounds on the input
+    add_set_constraint!(model, problem.input, first(neurons), problem.lower, problem.upper)
+
 
     # Add an objective to maximize our output
     weight_vector = linear_objective_to_weight_vector(objective, length(last(neurons)))

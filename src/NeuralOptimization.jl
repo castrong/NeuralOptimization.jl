@@ -14,6 +14,7 @@ using Printf # For writing out .nnet files
 using NPZ # For reading and writing .npy files
 using PyCall # For Marabou, also to read .npz with certain data types unsupported by NPZ
 using BenchmarkTools # For our benchmark timing
+using Requires
 
 # Python libraries that we'll need for Marabou
 py"""
@@ -25,6 +26,7 @@ from maraboupy import Marabou
 from maraboupy import MarabouCore
 from maraboupy import MarabouUtils
 """
+GurobiSolver(Gurobi.Env())
 
 # We have to pin an old version of Flux to get it to work with Adversarial.jl
 # Pkg.free("Flux")
@@ -32,8 +34,8 @@ from maraboupy import MarabouUtils
 # Pkg.pin(Pkg.PackageSpec(name="Flux", version="0.8.3"))
 using Flux;
 
-Pkg.add(Pkg.PackageSpec(url="https://github.com/jaypmorgan/Adversarial.jl.git")); # Adversarial.jl
-using Adversarial;
+#Pkg.add(Pkg.PackageSpec(url="https://github.com/jaypmorgan/Adversarial.jl.git")); # Adversarial.jl
+using Adversarial
 
 using LinearAlgebra
 import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
@@ -56,7 +58,6 @@ function model_creator(solver)
         return JuMP.Model(with_optimizer(solver.optimizer))
     end
 end
-JuMP.Model(solver) = model_creator(solver)
 
 JuMP.value(vars::Vector{VariableRef}) = value.(vars)
 
