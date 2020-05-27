@@ -178,7 +178,7 @@ function parse_optimizer(optimizer_string)
         sbt_string = split(chunks[2], "=")[2]
         sbt = parse(Bool, sbt_string)
         dividestrategy = split(chunks[3], "=")[2]
-        return NeuralOptimization.Marabou(usesbt=sbt, dividestrategy=dividestrategy)
+        return NeuralOptimization.MarabouBinarySearch(usesbt=sbt, dividestrategy=dividestrategy)
     elseif (optimizer_type == "Sherlock")
         backend_optimizer_string = split(chunks[2], "=")[2]
         threads_string = split(chunks[3], "=")[2]
@@ -216,6 +216,28 @@ function parse_optimizer(optimizer_string)
     elseif (optimizer_type == "PGD")
         return NeuralOptimization.PGD()
     end
+end
+
+# Convert between the two types - for now just support id and ReLU activations
+function network_to_mipverify_network(network, label="default_label")
+    mipverify_layers = []
+    for layer in network.layers
+        weights = copy(transpose(layer.weights)) # copy to get rid of transpose type
+        bias = layer.bias
+		println("weight size: ", size(weights))
+		println("bias size: ", size(bias))
+        push!(mipverify_layers, MIPVerify.Linear(weights, bias))
+        if (layer.activation == ReLU())
+            @debug "Adding ReLU layer to MIPVerify representation"
+            push!(mipverify_layers, MIPVerify.ReLU())
+        elseif (layer.activation == Id())
+            @debug "ID layer for MIPVerify is assumed (no explicit representation)"
+        else
+            @debug "Only ID and ReLU activations supported right now"
+            throw(ArgumentError("Only ID and ReLU activations supported right now"))
+        end
+    end
+    return MIPVerify.Sequential(mipverify_layers, label)
 end
 
 """
