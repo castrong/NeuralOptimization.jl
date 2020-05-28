@@ -30,11 +30,13 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
     # it with the objective - shouldn't change performance but is
     # consistent with the network structure for Sherlock
     if (problem.network.layers[end].activation == Id())
+		println("in marabou incorporating into single output layer")
         @debug "In Marabou incorporating into single output layer"
         augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
-        augmented_objective = LinearObjective([1.0], [1])
+		augmented_objective = LinearObjective([1.0], [1])
         augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper)
     else
+		println("last layer is not ID")
         augmented_problem = problem
     end
 
@@ -47,6 +49,7 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
 
 	# Write the network then run the solver
 	network_file = string(tempname(), ".nnet")
+	println(network_file)
 	write_nnet(network_file, augmented_problem.network)
 	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, augmented_problem.lower, augmented_problem.upper, time_limit)
 
@@ -120,7 +123,7 @@ function init_marabou_function()
 		# Set the options
 		options = MarabouCore.Options()
 		options._optimize = True
-		options._verbosity = 1
+		options._verbosity = 0
 		options._timeoutInSeconds = timeout
 		# Parse the divide strategy from a string to its corresponding enum
 		if (divide_strategy == "EarliestReLU"):

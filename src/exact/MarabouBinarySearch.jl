@@ -137,7 +137,7 @@ function init_marabou_binary_function()
 		# Setup options
 		options = MarabouCore.Options()
 		options._optimize = False
-		options._verbosity = 1
+		options._verbosity = 0
 		options._timeoutInSeconds = timeout
 		options._dnc = False
 		# Parse the divide strategy from a string to its corresponding enum

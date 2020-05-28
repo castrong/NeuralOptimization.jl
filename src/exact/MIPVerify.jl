@@ -24,5 +24,5 @@ function optimize(solver::MIPVerify, problem::OutputOptimizationProblem, time_li
 end
 
 function Base.show(io::IO, solver::MIPVerify)
-	print(io, "MIPVerify_dummyclass")
+	print(io, "MIPVerify")
 end
