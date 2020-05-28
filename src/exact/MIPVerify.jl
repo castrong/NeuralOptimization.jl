@@ -16,15 +16,13 @@ Sound and complete
 
 """
 @with_kw mutable struct MIPVerify
-    
+    dummy_var = false
 end
 
-function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 30)
-	@debug string("Optimizing with: ", solver)
-    @assert problem.input isa Hyperrectangle or problem.input isa HPolytope
-
+function optimize(solver::MIPVerify, problem::OutputOptimizationProblem, time_limit::Int = 30)
+	@debug "DON'T CALL THIS, MIPVERIFY DUMMY CODE"
 end
 
-function Base.show(io::IO, solver::Marabou)
-	print(io, string("Marabou_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy))
+function Base.show(io::IO, solver::MIPVerify)
+	print(io, "MIPVerify_dummyclass")
 end

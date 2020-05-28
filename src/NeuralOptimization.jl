@@ -102,6 +102,7 @@ include("exact/VanillaMIP.jl")
 include("exact/Sherlock.jl")
 include("exact/Marabou.jl")
 include("exact/MarabouBinarySearch.jl")
+include("exact/MIPVerify.jl")
 
 
 export LBFGS
@@ -110,5 +111,6 @@ export VanillaMIP
 export Sherlock
 export Marabou
 export MarabouBinarySearch
+export MIPVerify
 
 end

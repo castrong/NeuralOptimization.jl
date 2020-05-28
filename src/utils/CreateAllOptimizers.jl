@@ -8,13 +8,14 @@ LBFGS_optimizer = NeuralOptimization.LBFGS()
 FGSM_optimizer = NeuralOptimization.FGSM()
 PGD_optimizer = NeuralOptimization.PGD()
 
-# NSVerify and Sherlock
+# NSVerify, Sherlock, and MIPVerify
 VanillaMIP_Gurobi_optimizer_8threads = NeuralOptimization.VanillaMIP(optimizer=Gurobi.Optimizer, threads=8)
 VanillaMIP_Gurobi_optimizer_1thread = NeuralOptimization.VanillaMIP(optimizer=Gurobi.Optimizer, threads=1)
 VanillaMIP_GLPK_optimizer = NeuralOptimization.VanillaMIP(optimizer=GLPK.Optimizer)
 Sherlock_Gurobi_optimizer_8threads = NeuralOptimization.Sherlock(optimizer=Gurobi.Optimizer, threads=8)
 Sherlock_Gurobi_optimizer_1thread = NeuralOptimization.Sherlock(optimizer=Gurobi.Optimizer, threads=1)
 Sherlock_GLPK_optimizer = NeuralOptimization.Sherlock(optimizer=GLPK.Optimizer)
+MIPVerify_optimizer = NeuralOptimization.MIPVerify()
 
 # Marabou variations
 Marabou_optimizer_ReLUViolation = NeuralOptimization.Marabou(usesbt=false, dividestrategy = "ReLUViolation")
