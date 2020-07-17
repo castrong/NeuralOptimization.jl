@@ -83,11 +83,31 @@ else
 end
 
 input_set, objective, maximize_objective = NeuralOptimization.read_property_file(property_file, num_inputs; lower=lower, upper=upper)
-println(input_set)
-println(objective)
-println(maximize_objective)
-problem = NeuralOptimization.OutputOptimizationProblem(network, input_set, objective, maximize_objective, lower, upper)
+problem = NeuralOptimization.OutputOptimizationProblem(network=network, input=input_set, objective=objective, max=maximize_objective, lower=lower, upper=upper)
 optimizer = NeuralOptimization.parse_optimizer(optimizer_string)
-println(optimizer)
 
-NeuralOptimization.optimize(optimizer, problem, 10)
+elapsed_time = @elapsed result = NeuralOptimization.optimize(optimizer, problem, 10)
+
+# Print some things for help debugging
+println("Result status: ", result.status)
+println("Optimizer: ", optimizer)
+println("Result objective value: ", result.objective_value)
+println("Elapsed time: ", elapsed_time)
+
+optimal_input = result.input
+optimal_output = -1
+# We can only compute the output if our problem finished successfully
+if (result.status == :success)
+      println("Computing optimal output from optimal input")
+      optimal_output = NeuralOptimization.compute_output(network, vec(result.input)[:])
+end
+
+open(output_file, "w") do f
+    # Writeout our results - for the optimal output we remove the brackets on the list
+    write(f,
+          string(result.status), ",",
+          string(result.objective_value), ",",
+          string(elapsed_time), ",",
+          string(optimal_output)[2:end-1], "\n")
+   close(f)
+end

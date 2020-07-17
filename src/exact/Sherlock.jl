@@ -40,7 +40,7 @@ function optimize(solver::Sherlock, problem::OutputOptimizationProblem, time_lim
     # if the last layer was ID() then this just combines the objective into that layer
     augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
     augmented_objective = LinearObjective([1.0], [1])
-    augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper)
+    augmented_problem = OutputOptimizationProblem(network=augmented_network, input=problem.input, objective=augmented_objective, max=problem.max, lower=problem.lower, upper=problem.upper)
 
     if (augmented_problem.max)
         (x_u, u) = output_bound(solver, augmented_problem, :max, start_time, time_limit)

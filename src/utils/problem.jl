@@ -76,13 +76,18 @@ The optimization problem consists of: find the point in the input set
 s.t. the output is in the output set and the input maximizes (or minimizes
 depending on the value of the bool max) the objective function
 """
-struct OutputOptimizationProblem{P} <: Problem
+@with_kw struct OutputOptimizationProblem{P} <: Problem
     network::Network
     input::P
 	objective::LinearObjective
 	max::Bool
+	# Upper and lower on the input variables, the domain of the network
 	lower::Float64
 	upper::Float64
+	# Upper and lower bounds on all variables
+	lower_bounds::Array{Array{Float64,1},1} = [[]]
+	upper_bounds::Array{Array{Float64,1},1} = [[]]
+
 end
 
 # A problem based on finding the minimum perturbation to the input

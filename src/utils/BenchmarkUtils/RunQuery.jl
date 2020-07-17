@@ -50,13 +50,13 @@ num_inputs = size(network.layers[1].weights, 2)
 # Create the problem: network, input constraint, objective, maximize or minimize
 center_input = npzread(input_file)
 input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], delta_list) # center and radius
-problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize, -Inf, Inf)
+problem = NeuralOptimization.OutputOptimizationProblem(network=network, input=input, objective=objective, max=maximize, lower=-Inf, upper=Inf)
 
 # Run simple problem to avoid startup time being counted
 simple_nnet = NeuralOptimization.read_nnet("./Networks/small_nnet.nnet")
 simple_objective = NeuralOptimization.LinearObjective([1.0], [1])
 simple_input = NeuralOptimization.Hyperrectangle([1.0], [1.0])
-simple_problem = NeuralOptimization.OutputOptimizationProblem(simple_nnet, simple_input, simple_objective, true, -Inf, Inf)
+simple_problem = NeuralOptimization.OutputOptimizationProblem(network=simple_nnet, input=simple_input, objective=simple_objective, max=true, lower=-Inf,upper=Inf)
 time_temp = @elapsed result = NeuralOptimization.optimize(optimizer, simple_problem, 20)
 
 # Parse the optimizer
@@ -78,7 +78,7 @@ end
 
 output_file = string(output_file, ".csv") # add on the .csv
 open(output_file, "w") do f
-    # Writeout our results - for the optimal output we remove the brackets on the list 
+    # Writeout our results - for the optimal output we remove the brackets on the list
     write(f,
           string(result.status), ",",
           string(result.objective_value), ",",

@@ -32,7 +32,7 @@ function Benchmark_Category(optimizers, network_files, objectives, input_files, 
                     # Create the problem: network, input constraint, objective, maximize or minimize
                     center_input = transpose_inputs ? transpose(npzread(input_file)) : npzread(input_file)
                     input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], delta * ones(num_inputs)) # center and radius
-                    problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize)
+                    problem = NeuralOptimization.OutputOptimizationProblem(network=network, input=input, objective=objective, max=maximize)
                     elapsed_time = @elapsed result = NeuralOptimization.optimize(optimizer, problem, timeout)
                     println("Result objective value: ", result.objective_value)
 

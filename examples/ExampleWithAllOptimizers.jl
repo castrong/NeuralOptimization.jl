@@ -69,7 +69,7 @@ input = NeuralOptimization.Hyperrectangle(vec(center_input)[:], input_radius * o
 objective = NeuralOptimization.LinearObjective([1.0], [1]) # objective is to just maximize the first output
 maximize = true
 
-problem = NeuralOptimization.OutputOptimizationProblem(network, input, objective, maximize, -Inf, Inf)
+problem = NeuralOptimization.OutputOptimizationProblem(network=network, input=input, objective=objective, max=maximize, lower=-Inf, upper=Inf)
 
 # Run each optimizer and save results
 results = []

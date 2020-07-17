@@ -34,6 +34,8 @@ end
     code here: https://github.com/sisl/NNet/blob/master/utils/writeNNet.py.
 """
 function write_nnet(fname::String, network::Network)
+    println("Writting to: ", fname)
+    println("Size last layer: ", size(network.layers[end].weights))
     open(fname, "w") do f
         #####################
         # First, we write the header lines:
@@ -105,7 +107,7 @@ function write_nnet(fname::String, network::Network)
             weights = layer.weights
             for i = 1:size(weights, 1)
                 for j = 1:size(weights, 2)
-                    write(f, @sprintf("%.5e,", weights[i, j])) #Five digits written. More can be used, but that requires more space.
+                    write(f, @sprintf("%.10e,", weights[i, j])) #five digits written. More can be used, but that requires more space.
                 end
                 write(f, "\n")
             end
@@ -113,7 +115,7 @@ function write_nnet(fname::String, network::Network)
             # Write the current bias
             bias = layer.bias
             for i = 1:length(bias)
-                write(f, @sprintf("%.5e,", bias[i])) #Five digits written. More can be used, but that requires more space.
+                write(f, @sprintf("%.10e,", bias[i])) #five digits written. More can be used, but that requires more space.
                 write(f, "\n")
             end
 
@@ -123,6 +125,95 @@ function write_nnet(fname::String, network::Network)
     end
 
 
+end
+
+"""
+    read_property_file(filename::String)
+
+Read a property file and return: (i) an input set, and (ii) an objective, and
+(iii) a boolean that is true if the objective should be maximized.
+Each line in the property file
+
+For now we assume a hyper-rectangle input set.
+"""
+function read_property_file(filename::String, num_inputs::Int64; lower::Float64=0.0, upper::Float64=1.0)
+
+    # Keep track of the input lower and upper bounds that you accumulate
+    lower_bounds = lower .* ones(num_inputs)
+    upper_bounds = upper .* ones(num_inputs)
+    # Variables and coefficients for objective
+    variables::Vector{Int64} = []
+    coefficients::Vector{Float64} = []
+    maximize_objective = true
+
+    lines = readlines(filename)
+    for line in lines
+        line = replace(line, " "=>"") # Remove spaces
+        if occursin("Maximize", line) || occursin("Minimize", line)
+            println("Objective line: ", line)
+            maximize_objective = line[1:8] == "Maximize" ? true : false
+            expr_string = line[9:end]
+            done = false
+
+            while !done
+                plus_index = findfirst('+', expr_string)
+                done = plus_index == nothing # You're finished if you've reached the last term (no + left)
+
+                # If you're on the last term adjust the index appropriately
+                plus_index = plus_index == nothing ? length(expr_string)+1 : plus_index # handle if + is not found, the last term
+
+                # Isolate the current term and parse it
+                cur_term = expr_string[1:plus_index-1]
+                loc_y = findfirst('y', cur_term)
+                @assert loc_y != nothing "didn't find a y in this term"
+                coefficient_string = cur_term[1:loc_y-1]
+                if (coefficient_string == "-")
+                    coefficient = -1.0
+                elseif (coefficient_string == "")
+                    coefficient = 1.0
+                else
+                    coefficient = parse(Float64, coefficient_string)
+                end
+                variable = parse(Int64, cur_term[loc_y + 1:end]) + 1 # +1 in index since property file starts indexing from 0
+
+                # Add the coefficient and variable to the list
+                push!(coefficients, coefficient)
+                push!(variables, variable)
+
+                # Update your expr_string to cut off the first term
+                expr_string = expr_string[plus_index+1:end]
+            end
+        elseif occursin("x", line)
+            # Handle each type of comparator
+            if (occursin("<=", line))
+                comparator_index = findfirst("<=", line)
+                x_index = findfirst('x', line)
+                variable_index = parse(Int64, line[x_index+1:comparator_index[1]-1])  # go from after x to before comparator
+                scalar = parse(Float64, line[comparator_index[2]+1:end])
+                upper_bounds[variable_index + 1] = min(upper, scalar) # +1 in index since property file starts indexing from 0
+            elseif (occursin(">=", line))
+                comparator_index = findfirst(">=", line)
+                x_index = findfirst('x', line)
+                variable_index = parse(Int64, line[x_index+1:comparator_index[1]-1])  # go from after x to before comparator
+                scalar = parse(Float64, line[comparator_index[2]+1:end])
+                lower_bounds[variable_index + 1] = max(lower, scalar) # +1 in index since property file starts indexing from 0
+            elseif (occursin("==", line)) # is it == or =?
+                comparator_index = findfirst("==", line)
+                x_index = findfirst('x', line)
+                variable_index = parse(Int64, line[x_index+1:comparator_index[1]-1]) # go from after x to before comparator
+                scalar = parse(Float64, line[comparator_index[2]+1:end])
+                lower_bounds[variable_index + 1] = max(lower, scalar) # +1 in index since property file starts indexing from 0
+                upper_bounds[variable_index + 1] = min(upper, scalar)
+            else
+                @assert false string("Unrecognized comparator: ", line)
+            end
+        else
+            @assert false string("Unrecognized line in property file: ", line)
+        end
+    end
+
+    # Return the hyperrectangle, the objective, and whether to maximize or minimize
+    return NeuralOptimization.Hyperrectangle(low=lower_bounds, high=upper_bounds), NeuralOptimization.LinearObjective(coefficients, variables), maximize_objective
 end
 
 """
@@ -162,6 +253,33 @@ function linear_objective_to_weight_vector(objective::LinearObjective, n::Int)
     weight_vector = zeros(n)
     weight_vector[objective.variables] = objective.coefficients;
     return weight_vector
+end
+
+# Given upper and lower bounds on the output variables
+# give an upper and lower bound on the objective
+function bounds_to_objective_bounds(objective::LinearObjective, output_lower, output_upper)
+    objective_lower = 0
+    objective_upper = 0
+    for i = 1:length(objective.coefficients)
+        coeff = objective.coefficients[i]
+        var = objective.variables[i]
+        # With negative coefficients we must switch which the upper and lower will really correspond to
+        # in terms of their contribution to the objective
+        if (coeff < 0)
+            objective_lower = objective_lower + output_upper[var] * coeff
+            objective_upper = objective_upper + output_lower[var] * coeff
+        else
+            objective_lower = objective_lower + output_lower[var] * coeff
+            objective_upper = objective_upper + output_upper[var] * coeff
+        end
+    end
+    return objective_lower, objective_upper
+end
+
+# List of bounds alternates between upper and lower - separate into two lists
+function bounds_to_lower_upper(bounds)
+    @assert iseven(length(bounds))
+    return bounds[1:2:end], bounds[2:2:end]
 end
 
 function parse_optimizer(optimizer_string)
@@ -224,8 +342,6 @@ function network_to_mipverify_network(network, label="default_label")
     for layer in network.layers
         weights = copy(transpose(layer.weights)) # copy to get rid of transpose type
         bias = layer.bias
-		println("weight size: ", size(weights))
-		println("bias size: ", size(bias))
         push!(mipverify_layers, MIPVerify.Linear(weights, bias))
         if (layer.activation == ReLU())
             @debug "Adding ReLU layer to MIPVerify representation"

@@ -15,10 +15,10 @@ Branch and bound with bound tightening at each step in the simplex
 Sound and complete
 
 """
-@with_kw mutable struct Marabou
+@with_kw struct Marabou
     usesbt::Bool = false
-	dividestrategy = "ReLUViolation"
-	Marabou(a,b) where {R} = new(a, b) #
+	dividestrategy::String = "ReLUViolation"
+	triangle_relaxation::Bool = false
 end
 
 function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 30)
@@ -29,16 +29,15 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
     # If our last layer is ID we can replace the last layer and combine
     # it with the objective - shouldn't change performance but is
     # consistent with the network structure for Sherlock
-    if (problem.network.layers[end].activation == Id())
-		println("in marabou incorporating into single output layer")
-        @debug "In Marabou incorporating into single output layer"
-        augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
-		augmented_objective = LinearObjective([1.0], [1])
-        augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper)
-    else
-		println("last layer is not ID")
+    # if (problem.network.layers[end].activation == Id())
+	# 	println("in marabou incorporating into single output layer")
+    #     @debug "In Marabou incorporating into single output layer"
+    #     augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
+	# 	augmented_objective = LinearObjective([1.0], [1])
+    #     augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper, problem.lower_bounds, problem.upper_bounds)
+    # else
         augmented_problem = problem
-    end
+    # end
 
     A, b = tosimplehrep(augmented_problem.input)
 	weight_vector = linear_objective_to_weight_vector(augmented_problem.objective, length(augmented_problem.network.layers[end].bias))
@@ -51,7 +50,7 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
 	network_file = string(tempname(), ".nnet")
 	println(network_file)
 	write_nnet(network_file, augmented_problem.network)
-	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, augmented_problem.lower, augmented_problem.upper, time_limit)
+	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, augmented_problem.lower, augmented_problem.upper, augmented_problem.lower_bounds, augmented_problem.upper_bounds, solver.triangle_relaxation, time_limit)
 
 	# Turn the string status into a symbol to return
     if (status == "success")
@@ -71,7 +70,7 @@ end
 
 function init_marabou_function()
 	py"""
-	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, timeout):
+	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, lower_bounds, upper_bounds, triangle_relaxation, timeout):
 		# Load in the network
 		network = Marabou.read_nnet(network_file, use_sbt)
 		inputVars = network.inputVars.flatten()
@@ -120,6 +119,48 @@ function init_marabou_function()
 				network.addEquation(input_constraint_equation)
 				print("Adding equation with participating vars", input_constraint_equation.getParticipatingVariables())
 
+		# Add bounds on each node from bound list
+		if (len(lower_bounds) > 0):
+			print("In here")
+			for layer_index in range(len(lower_bounds)):
+				print("Layer index: ", layer_index)
+				cur_lower_bounds = lower_bounds[layer_index]
+				cur_upper_bounds = upper_bounds[layer_index]
+				print("Upper: ", cur_upper_bounds)
+				for bound_index in range(len(cur_lower_bounds)):
+					cur_upper_bound = cur_upper_bounds[bound_index]
+					cur_lower_bound = cur_lower_bounds[bound_index]
+					# Set an upper and lower bound on the backward facing variable
+					# f = relu(b)
+					print("Indices: ", (layer_index, bound_index))
+					# layer index + 1 since we don't have bounds on the input layer
+					# we also wouldn't have a backward facing variable there
+					backwardsFacingVariable = network.nodeTo_b(layer_index+1, bound_index)
+					print("Bound: ", (cur_lower_bound, cur_upper_bound))
+					network.setLowerBound(backwardsFacingVariable, cur_lower_bound)
+					network.setUpperBound(backwardsFacingVariable, cur_upper_bound)
+
+					# We can't do a triangle relaxation on the output layer since it won't have a forward facing variable
+					if (triangle_relaxation and layer_index < len(lower_bounds) - 1):
+						print("Triangle relaxation on layer: ", layer_index + 1)
+						# Apply the triangle relaxation to nodes that are still split phase
+						if (cur_upper_bound <= 0):
+
+							print("Node fixed inactive")
+						elif (cur_lower_bound > 0):
+							print("Node fixed active")
+						else:
+							forwardsFacingVariable = network.nodeTo_f(layer_index+1, bound_index)
+							triangleEquation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.GE)
+							slope = cur_upper_bound / (cur_upper_bound - cur_lower_bound)
+
+							# y <= (x - l) u/(u-l) --> x u/(u-l) - y >= l u/(u-l)
+							triangleEquation.addAddend(slope, backwardsFacingVariable)
+							triangleEquation.addAddend(-1.0, forwardsFacingVariable)
+							triangleEquation.setScalar(cur_lower_bound * slope)
+							network.addEquation(triangleEquation)
+
+
 		# Set the options
 		options = MarabouCore.Options()
 		options._optimize = True
@@ -155,6 +196,7 @@ function init_marabou_function()
 		# Run the solver
 		start_solve_time = time.time()
 		vals, state = network.solve(filename="", options=options)
+		print("Finished solving")
 
 		status = ""
 		input_val = [-1.0]
