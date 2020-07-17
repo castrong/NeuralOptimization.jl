@@ -16,7 +16,7 @@ using PyCall # For Marabou, also to read .npz with certain data types unsupporte
 using BenchmarkTools # For our benchmark timing
 using Requires
 
-# Python libraries that we'll need for Marabou
+# # Python libraries that we'll need for Marabou
 py"""
 import time
 import sys
@@ -26,7 +26,6 @@ from maraboupy import Marabou
 from maraboupy import MarabouCore
 from maraboupy import MarabouUtils
 """
-GurobiSolver(Gurobi.Env())
 
 # We have to pin an old version of Flux to get it to work with Adversarial.jl
 # Pkg.free("Flux")
@@ -43,11 +42,9 @@ import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
 # For optimization methods:
 import JuMP.MOI.OPTIMAL, JuMP.MOI.INFEASIBLE, JuMP.MOI.TIME_LIMIT
 
-println("Running neural optimization")
 # TODO: What should this be like long term? want to have a clean process
 # of specifying things but they're not supported by all optimizers
 function model_creator(solver)
-    println("In model creator!!!!!!!!")
     if (solver.optimizer == Gurobi.Optimizer)
         println("Creating Gurobi model")
         println("Threads: ", solver.threads)
@@ -88,6 +85,7 @@ export
     LinearObjective,
     Result,
     read_nnet,
+    read_property_file,
     compute_output,
     compute_objective,
     compute_gradient,

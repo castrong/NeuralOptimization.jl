@@ -17,15 +17,14 @@ network.nnet property.txt
 How to run in REPL:
 
 module test
-       ARGS = ["--config_file", "/Users/cstrong/Desktop/Stanford/Research/NeuralOptimization.jl/ConfigFiles/BenchmarkConfigs/test.yaml"]
-       include("/Users/cstrong/Desktop/Stanford/Research/NeuralOptimization.jl/src/utils/BenchmarkUtils/BenchmarkMaker.jl")
+       ARGS = ["--config_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/ConfigFiles/BenchmarkConfigs/test_benchmark_maker.yaml"]
+       include("/Users/castrong/Desktop/Research/NeuralOptimization.jl/src/utils/BenchmarkUtils/BenchmarkMaker.jl")
 end
 =#
 
 using Pkg
 # Interface:
-# RunMIPVerifySatisfiability environment_path property.txt network.nnet output_file strategy timeout_per_node
-# For parsing the arguments to the file
+# BenchmarkUtils/BenchmarkMaker.jl --config_file path/to/file/my_file.yaml
 using ArgParse
 using YAML
 arg_settings = ArgParseSettings()
@@ -110,7 +109,7 @@ if haskey(config, "acas")
 
                 # Add a line to your benchmark file
                 open(benchmarks_file, "a") do f
-                    println(f, network_file, " ", property_file)
+                    println(f, network_output_file, " ", property_output_file)
                 end
 
                 cur_count = cur_count + 1
@@ -167,7 +166,7 @@ if haskey(config, "mnist")
 
                 # Add a line to your benchmark file
                 open(benchmarks_file, "a") do f
-                    println(f, network_file, " ", property_file)
+                    println(f, network_output_file, " ", property_file)
                 end
             end
         end
@@ -217,7 +216,7 @@ if haskey(config, "taxinet")
 
                     # Add a line to your benchmark file
                     open(benchmarks_file, "a") do f
-                        println(f, network_file, " ", property_file_max)
+                        println(f, network_output_file, " ", property_file_max)
                     end
                 end
                 if (minimize_output)
