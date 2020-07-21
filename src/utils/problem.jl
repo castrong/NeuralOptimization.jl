@@ -87,7 +87,6 @@ depending on the value of the bool max) the objective function
 	# Upper and lower bounds on all variables
 	lower_bounds::Array{Array{Float64,1},1} = [[]]
 	upper_bounds::Array{Array{Float64,1},1} = [[]]
-
 end
 
 # A problem based on finding the minimum perturbation to the input
