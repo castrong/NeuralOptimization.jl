@@ -16,7 +16,10 @@ Sound and complete
 
 """
 @with_kw mutable struct MIPVerify
-    dummy_var = false
+	optimizer = GLPK.Optimizer
+    threads = 1
+	strategy = "lp"
+	preprocess_timeout_per_node = 5
 end
 
 function optimize(solver::MIPVerify, problem::OutputOptimizationProblem, time_limit::Int = 30)
@@ -24,5 +27,11 @@ function optimize(solver::MIPVerify, problem::OutputOptimizationProblem, time_li
 end
 
 function Base.show(io::IO, solver::MIPVerify)
-	print(io, "MIPVerify")
+	optimizer_string = "otheroptimizer"
+    if solver.optimizer == GLPK.Optimizer
+        optimizer_string = "GLPK.Optimizer"
+    elseif solver.optimizer == Gurobi.Optimizer
+        optimizer_string = "Gurobi.Optimizer"
+    end
+    print(io, string("MIPVerify_", "optimizer=", optimizer_string, "_", "threads=", string(solver.threads), "_strategy=", solver.strategy, "_preprocesstimeoutpernode=", solver.preprocess_timeout_per_node))
 end

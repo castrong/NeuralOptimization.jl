@@ -88,7 +88,22 @@ if haskey(config, "marabou_binary_search")
 end
 
 if haskey(config, "mipverify")
-    push!(solvers, NeuralOptimization.MIPVerify())
+
+    optimizer_strings = split(config["mipverify"]["optimizer"], ",")
+    threadss = parse.(Int64, split(string(config["mipverify"]["threads"]), ","))
+    strategies = split(string(config["mipverify"]["strategy"]), ",")
+    preprocess_timeout_per_nodes = parse.(Float64, split(config["mipverify"]["preprocess_timeout_per_node"], ","))
+
+    for (optimizer_string, threads, strategy, preprocess_timeout) in zip(optimizer_strings, threadss, strategies, preprocess_timeout_per_nodes)
+        if (optimizer_string == "glpk")
+            optimizer = GLPK.Optimizer
+        elseif (optimizer_string == "gurobi")
+            optimizer = Gurobi.Optimizer
+        else
+            @assert false "Unrecognized optimizer for Sherlock"
+        end
+        push!(solvers, NeuralOptimization.MIPVerify(optimizer=optimizer, threads=threads, strategy=strategy, preprocess_timeout_per_node=preprocess_timeout))
+    end
 end
 
 if haskey(config, "sherlock")
@@ -146,6 +161,7 @@ for solver in solvers
         result_file = string(solver, ".", network_name_no_ext, ".", property_name_no_ext, ".txt")
         result_file = joinpath(results_path, result_file)
         query_line = string("--optimizer ", solver, " --network_file ", network_file, " --property_file ", property_file, " --result_file ", result_file)
+
         open(query_file, "a") do f
             println(f, query_line)
         end

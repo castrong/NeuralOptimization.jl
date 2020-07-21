@@ -65,13 +65,12 @@ if !isfile(result_file)
 	optimizer = NeuralOptimization.parse_optimizer(optimizer_string)
 
 	# Run a simple problem to avoid startup time being counted
-	simple_nnet = NeuralOptimization.read_nnet("./Networks/small_nnet.nnet")
+	simple_nnet = NeuralOptimization.read_nnet(joinpath(environment_path, "./Networks/small_nnet.nnet"))
 	simple_objective = NeuralOptimization.LinearObjective([1.0], [1])
 	simple_input = NeuralOptimization.Hyperrectangle([1.0], [1.0])
 	simple_problem = NeuralOptimization.OutputOptimizationProblem(network=simple_nnet, input=simple_input, objective=simple_objective, max=true, lower=-Inf,upper=Inf)
 	time_temp = @elapsed result = NeuralOptimization.optimize(optimizer, simple_problem, 20)
 	println("Simple problem ran in: ", time_temp)
-
 
 	# A problem needs a network, input set, objective and whether to maximize or minimize.
 	# it also takes in the lower and upper bounds on the network input variables which describe

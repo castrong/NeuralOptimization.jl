@@ -1,0 +1,34 @@
+global:
+    root_dir: /Users/castrong/Desktop/Research/NeuralOptimization.jl
+    output_path: /Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/
+
+fgsm:
+
+lbfgs:
+
+pgd:
+
+marabou:
+    usesbt: false,true
+    dividestrategy: ReLUViolation,EarliestReLU
+
+marabou_binary_search:
+    usesbt: true,true
+    dividestrategy: EarliestReLU,ReLUViolation
+
+mipverify:
+    optimizer: gurobi,gurobi,glpk
+    threads: 1,4,8
+    strategy: mip,lp,ia
+    preprocess_timeout_per_node: 2,5,10
+sherlock:
+    m: 1000000,100
+    optimizer: glpk,gurobi
+    output_flag: 1,2
+    threads: 1,4
+
+vanillamip:
+    optimizer: gurobi,glpk
+    output_flag: 1,10
+    threads: 1,8
+    m: 1000000,1000

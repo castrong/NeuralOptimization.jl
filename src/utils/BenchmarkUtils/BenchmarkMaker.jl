@@ -59,14 +59,14 @@ function write_property_file_from_image(input_image_file::String, epsilon::Float
     open(output_file, "w") do f
         # Write the lower and upper bounds on each pixel
         for (index, x_0) in enumerate(input_image)
-            println(f, "x_", index, " >= ", x_0 - epsilon)
-            println(f, "x_", index, " <= ", x_0 + epsilon)
+            println(f, "x", index-1, " >= ", x_0 - epsilon) # Index -1 since property file specification indexes from 0
+            println(f, "x", index-1, " <= ", x_0 + epsilon) # Index -1 since property file specification indexes from 0
         end
 
         # Print the objective
         print(f, maximize ? "Maximize " : "Minimize ")
         for (coeff_index, (coeff, variable)) in enumerate(zip(coefficients, variables))
-            print(f, coeff, "y", variable)
+            print(f, coeff, "y", variable-1) # Index - 1 since property file specification indexes from 0
             # Don't print the "+" after the last coefficient
             if (coeff_index < length(coefficients))
                 print(f, " + ")
