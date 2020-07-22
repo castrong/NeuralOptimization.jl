@@ -43,6 +43,10 @@ arg_settings = ArgParseSettings()
 		help = "Result file name"
 		arg_type = String
 		required = true
+	"--timeout"
+		help = "Internal soft timeout for the solve"
+		arg_type = Int64
+		default = 60
 end
 
 # Parse your arguments
@@ -53,6 +57,7 @@ optimizer_string = parsed_args["optimizer"]
 network_file = parsed_args["network_file"]
 property_file = parsed_args["property_file"]
 result_file = parsed_args["result_file"]
+timeout = parsed_args["timeout"]
 
 # If the result file is already there do nothing
 if !isfile(result_file)
@@ -98,7 +103,7 @@ if !isfile(result_file)
 	input_set, objective, maximize_objective = NeuralOptimization.read_property_file(property_file, num_inputs; lower=lower, upper=upper)
 	problem = NeuralOptimization.OutputOptimizationProblem(network=network, input=input_set, objective=objective, max=maximize_objective, lower=lower, upper=upper)
 
-	elapsed_time = @elapsed result = NeuralOptimization.optimize(optimizer, problem, 10)
+	elapsed_time = @elapsed result = NeuralOptimization.optimize(optimizer, problem, timeout)
 
 	# Print some things for help debugging
 	println("Result status: ", result.status)
