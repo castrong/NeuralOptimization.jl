@@ -58,6 +58,10 @@ query_file = joinpath(output_path, string("benchmark_set_", config["global"]["qu
 @assert isfile(benchmark_file)
 mkpath(results_path)
 
+# Copy config file to the output folder
+config_path, config_name = splitdir(yaml_file)
+cp(yaml_file, joinpath(output_path, config_name))
+
 solvers = []
 if haskey(config, "fgsm")
     push!(solvers, NeuralOptimization.FGSM())

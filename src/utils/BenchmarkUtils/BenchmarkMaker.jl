@@ -53,6 +53,10 @@ properties_output_path = joinpath(output_path, "Properties")
 benchmarks_file = joinpath(output_path, "Benchmarks.txt")
 mkpath.([output_path, networks_output_path, properties_output_path])
 
+# Copy config file to the output folder
+config_path, config_name = splitdir(yaml_file)
+cp(yaml_file, joinpath(output_path, config_name))
+
 
 function write_property_file_from_image(input_image_file::String, epsilon::Float64, coefficients::Array{Float64, 1}, variables::Array{Int64, 1}, maximize::Bool, output_file::String)
     input_image = npzread(input_image_file)
