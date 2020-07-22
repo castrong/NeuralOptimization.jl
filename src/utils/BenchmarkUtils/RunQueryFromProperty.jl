@@ -46,7 +46,7 @@ arg_settings = ArgParseSettings()
 	"--timeout"
 		help = "Internal soft timeout for the solve"
 		arg_type = Int64
-		default = 60
+		default = 36000
 end
 
 # Parse your arguments
