@@ -54,7 +54,7 @@ using Gurobi
 output_path = config["global"]["output_path"]
 results_path = joinpath(output_path, "Results")
 benchmark_file = joinpath(output_path, "Benchmarks.txt") # assume a benchmark file will be located there
-query_file = joinpath(output_path, string("benchmark_set_", config["global"]["query_file_name"], ".txt"))
+query_file = joinpath(output_path, string("benchmark_set_", config["global"]["query_file_name"], ".txt")) # prepend with benchmark set for the cluster's convention
 @assert isfile(benchmark_file)
 mkpath(results_path)
 
@@ -160,7 +160,7 @@ for solver in solvers
         # Create the result file, then write out the solver, benchmark, and result_file to query_file
         result_file = string(solver, ".", network_name_no_ext, ".", property_name_no_ext, ".txt")
         result_file = joinpath(results_path, result_file)
-        query_line = string("--optimizer ", solver, " --network_file ", network_file, " --property_file ", property_file, " --result_file ", result_file)
+        query_line = string("--environment_path ", root_dir, " --optimizer ", solver, " --network_file ", network_file, " --property_file ", property_file, " --result_file ", result_file)
 
         open(query_file, "a") do f
             println(f, query_line)
