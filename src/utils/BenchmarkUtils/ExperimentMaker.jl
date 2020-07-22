@@ -54,7 +54,7 @@ using Gurobi
 output_path = config["global"]["output_path"]
 results_path = joinpath(output_path, "Results")
 benchmark_file = joinpath(output_path, "Benchmarks.txt") # assume a benchmark file will be located there
-query_file = joinpath(output_path, "Queries.txt")
+query_file = joinpath(output_path, string("benchmark_set_", config["global"]["query_file_name"], ".txt"))
 @assert isfile(benchmark_file)
 mkpath(results_path)
 

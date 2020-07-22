@@ -1,6 +1,7 @@
 global:
     root_dir: /Users/castrong/Desktop/Research/NeuralOptimization.jl
     output_path: /Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/
+    query_file_name: query
 
 fgsm:
 
