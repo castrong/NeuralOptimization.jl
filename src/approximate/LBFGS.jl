@@ -52,7 +52,7 @@ function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
         result = Optim.optimize(x->-obj_coefficient * compute_output(nnet, x)[obj_variable],
                                 x->-obj_coefficient * get_gradient(nnet, x)[obj_variable, :],
                                 input_lower, input_upper, x_0,
-                                Optim.Fminbox(Optim.LBFGS()),
+                                Optim.Fminbox(Optim.LBFGS(linesearch=Optim.LineSearches.BackTracking())),
                                 Optim.Options(time_limit = time_limit); inplace=false)
         opt_val = -minimum(result)
 
@@ -61,7 +61,7 @@ function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
         result = Optim.optimize(x->obj_coefficient * compute_output(nnet, x)[obj_variable],
                                 x->obj_coefficient * get_gradient(nnet, x)[obj_variable, :],
                                 input_lower, input_upper, x_0,
-                                Optim.Fminbox(Optim.LBFGS()),
+                                Optim.Fminbox(Optim.LBFGS(linesearch=Optim.LineSearches.BackTracking())),
                                 Optim.Options(time_limit = time_limit); inplace=false)
         opt_val = minimum(result)
     end

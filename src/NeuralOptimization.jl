@@ -34,7 +34,16 @@ from maraboupy import MarabouUtils
 using Flux;
 
 #Pkg.add(Pkg.PackageSpec(url="https://github.com/jaypmorgan/Adversarial.jl.git")); # Adversarial.jl
-using Adversarial
+while true
+   try
+      using Adversarial
+      println("Adversarial imported!")
+      break
+   catch e
+      println("Failed, sleep for 0.5 seconds")
+      sleep(0.5)
+   end
+end
 
 using LinearAlgebra
 import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
