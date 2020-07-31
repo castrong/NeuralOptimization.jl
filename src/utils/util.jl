@@ -71,12 +71,12 @@ function write_nnet(fname::String, network::Network)
         write(f, string(num_outputs, ",")) # number of outputs
 
         hidden_layer_sizes = [size(layer.weights, 1) for layer in network.layers][1:end-1] # chop off the output layer
+        layer_sizes = [num_inputs, hidden_layer_sizes..., num_outputs]
         # mimicking https://github.com/sisl/NNet/blob/master/utils/writeNNet.py,
         # set the max hidden layer size to just be the input size
-        write(f, string(num_inputs), ",\n") # max size of any hidden layer
+        write(f, string(maximum(hidden_layer_sizes)), ",\n") # max size of any hidden layer
 
         # line 3
-        layer_sizes = [num_inputs, hidden_layer_sizes..., num_outputs]
         write(f, string(join(layer_sizes, ','), ","))
         write(f, "\n")
 
