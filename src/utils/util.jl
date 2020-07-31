@@ -89,8 +89,8 @@ function write_nnet(fname::String, network::Network)
 
         # line 7, 8 - mean, range of 0, 1 means it won't rescale the input at all
         # is asserting our inputs are already scaled to be mean 0, range 1
-        write(f, string(join(fill(0.0, num_inputs), ","), ",\n"))
-        write(f, string(join(fill(1.0, num_inputs), ","), ",\n"))
+        write(f, string(join(fill(0.0, num_inputs+1), ","), ",\n")) # 1 mean for each input and 1 for all outputs
+        write(f, string(join(fill(1.0, num_inputs+1), ","), ",\n")) # 1 range for each input and 1 for all outputs
 
         ##################
         # Write weights and biases of neural network
