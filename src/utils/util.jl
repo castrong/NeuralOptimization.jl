@@ -71,12 +71,12 @@ function write_nnet(fname::String, network::Network)
         write(f, string(num_outputs, ",")) # number of outputs
 
         hidden_layer_sizes = [size(layer.weights, 1) for layer in network.layers][1:end-1] # chop off the output layer
+        layer_sizes = [num_inputs, hidden_layer_sizes..., num_outputs]
         # mimicking https://github.com/sisl/NNet/blob/master/utils/writeNNet.py,
         # set the max hidden layer size to just be the input size
-        write(f, string(num_inputs), ",\n") # max size of any hidden layer
+        write(f, string(maximum(hidden_layer_sizes)), ",\n") # max size of any hidden layer
 
         # line 3
-        layer_sizes = [num_inputs, hidden_layer_sizes..., num_outputs]
         write(f, string(join(layer_sizes, ','), ","))
         write(f, "\n")
 
@@ -89,8 +89,8 @@ function write_nnet(fname::String, network::Network)
 
         # line 7, 8 - mean, range of 0, 1 means it won't rescale the input at all
         # is asserting our inputs are already scaled to be mean 0, range 1
-        write(f, string(join(fill(0.0, num_inputs), ","), ",\n"))
-        write(f, string(join(fill(1.0, num_inputs), ","), ",\n"))
+        write(f, string(join(fill(0.0, num_inputs+1), ","), ",\n")) # 1 mean for each input and 1 for all outputs
+        write(f, string(join(fill(1.0, num_inputs+1), ","), ",\n")) # 1 range for each input and 1 for all outputs
 
         ##################
         # Write weights and biases of neural network
