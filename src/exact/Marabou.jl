@@ -72,7 +72,7 @@ function init_marabou_function()
 	py"""
 	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, lower_bounds, upper_bounds, triangle_relaxation, timeout):
 		# Load in the network
-		network = Marabou.read_nnet(network_file, normalize=false)
+		network = Marabou.read_nnet(network_file, normalize=False)
 		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
 		#network.use_nlr = use_sbt
 		inputVars = network.inputVars.flatten()
