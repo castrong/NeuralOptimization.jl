@@ -105,9 +105,9 @@ if !isfile(result_file)
 	input_set, objective, maximize_objective = NeuralOptimization.read_property_file(property_file, num_inputs; lower=lower, upper=upper)
 	problem = NeuralOptimization.OutputOptimizationProblem(network=network, input=input_set, objective=objective, max=maximize_objective, lower=lower, upper=upper)
 
-	CPUTic()
+	CPUtic()
 	result = NeuralOptimization.optimize(optimizer, problem, timeout)
-	elapsed_time = CPUToc()
+	elapsed_time = CPUtoc()
 
 	# Print some things for help debugging
 	println("Result status: ", result.status)
