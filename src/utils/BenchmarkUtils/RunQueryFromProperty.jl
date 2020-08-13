@@ -20,6 +20,8 @@
 
 using Pkg
 using ArgParse
+using CPUTime
+
 arg_settings = ArgParseSettings()
 @add_arg_table! arg_settings begin
     "--environment_path"
@@ -103,7 +105,9 @@ if !isfile(result_file)
 	input_set, objective, maximize_objective = NeuralOptimization.read_property_file(property_file, num_inputs; lower=lower, upper=upper)
 	problem = NeuralOptimization.OutputOptimizationProblem(network=network, input=input_set, objective=objective, max=maximize_objective, lower=lower, upper=upper)
 
-	elapsed_time = @elapsed result = NeuralOptimization.optimize(optimizer, problem, timeout)
+	CPUTic()
+	result = NeuralOptimization.optimize(optimizer, problem, timeout)
+	elapsed_time = CPUToc()
 
 	# Print some things for help debugging
 	println("Result status: ", result.status)
