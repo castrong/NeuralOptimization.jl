@@ -82,7 +82,9 @@ end
 function init_marabou_binary_function()
 	py"""
 	def setup_network(network_file, A, b, use_sbt, lower, upper):
-		network = Marabou.read_nnet(network_file, use_sbt)
+		network = Marabou.read_nnet(network_file, normalize=false)
+		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
+		#network.use_nlr = use_sbt
 		inputVars = network.inputVars.flatten()
 		numInputs = len(inputVars)
 
