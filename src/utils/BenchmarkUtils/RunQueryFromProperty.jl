@@ -86,15 +86,15 @@ if !isfile(result_file)
 	network = NeuralOptimization.read_nnet(network_file)
 	num_inputs = size(network.layers[1].weights, 2)
 
-	if occursin("mnist", network_file)
+	if occursin("mnist", basename(network_file))
 		println("MNIST network")
 		lower = 0.0
 		upper = 1.0
-	elseif occursin("AutoTaxi", network_file)
+	elseif occursin("AutoTaxi", basename(network_file))
 		println("AutoTaxi network")
 		lower = 0.0
 		upper = 1.0
-	elseif occursin("ACASXU", network_file)
+	elseif occursin("ACASXU", basename(network_file))
 		println("ACAS network")
 		lower = -Inf
 		upper = Inf
