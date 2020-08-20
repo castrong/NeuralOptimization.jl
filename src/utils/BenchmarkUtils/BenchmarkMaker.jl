@@ -53,11 +53,6 @@ properties_output_path = joinpath(output_path, "Properties")
 benchmarks_file = joinpath(output_path, "Benchmarks.txt")
 mkpath.([output_path, networks_output_path, properties_output_path])
 
-# Copy config file to the output folder
-config_path, config_name = splitdir(yaml_file)
-cp(yaml_file, joinpath(output_path, config_name))
-
-
 function write_property_file_from_image(input_image_file::String, epsilon::Float64, coefficients::Array{Float64, 1}, variables::Array{Int64, 1}, maximize::Bool, output_file::String)
     input_image = npzread(input_image_file)
     open(output_file, "w") do f
@@ -90,17 +85,20 @@ if haskey(config, "acas")
     acas_config = config["acas"]
     network_dir = acas_config["network_dir"]
     property_dir = acas_config["property_dir"]
-    properties = parse.(Int, split(acas_config["properties"], " "))
+    properties = split(acas_config["properties"], " ")
     number_of_networks = parse.(Int, split(acas_config["number_of_networks"], " "))
+    println("Properties: ", properties)
 
     for (property, cur_num_networks) in zip(properties, number_of_networks)
         # Find the property to copy
+        println("Current property: ", property)
         property_name = string("acas_property_optimization_", property, ".txt")
         property_file = joinpath(root_dir, property_dir, property_name)
 
         # Copy to our property file
         property_output_file = joinpath(properties_output_path, property_name)
         cp(property_file, property_output_file, force=true) # will write several times if multiple properties
+        println("Copied to: ", property_output_file)
 
         cur_count = 0
         # Copy over the network files
@@ -236,3 +234,7 @@ if haskey(config, "taxinet")
         end
     end
 end
+
+# Copy config file to the output folder at the end once it has all run
+config_path, config_name = splitdir(yaml_file)
+cp(yaml_file, joinpath(output_path, config_name))
