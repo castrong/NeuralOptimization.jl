@@ -4,8 +4,8 @@ global:
 acas:
     network_dir: Networks/ACASXu
     property_dir: OptimizationProperties/ACASXu
-    properties: 1 2 3 4
-    number_of_networks: 2 2 2 2
+    properties: 1 2 3 4 1_quarterall
+    number_of_networks: 2 2 2 2 2
 mnist:
     network_dir: Networks/MNIST
     architectures: 10x20 20x20
