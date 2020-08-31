@@ -20,9 +20,8 @@ end
 function optimize(solver::FGSM, problem::Problem, time_limit::Int = 1200)
     @debug string("Optimizing with: ", solver)
 
-    # only works with hypercube for now
+    # only works with hypercube for now (except can clip to boundaries of a domain)
     @assert problem.input isa Hyperrectangle
-    @assert all(r->r==problem.input.radius[1], problem.input.radius)
     radius = problem.input.radius[1]
     x_0 = problem.input.center
     true_label = -1 # this won't matter since our loss function doesn't depend on it
@@ -39,7 +38,7 @@ function optimize(solver::FGSM, problem::Problem, time_limit::Int = 1200)
         x_adv = Adversarial.FGSM(flux_model, (x, y)->cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(problem.lower, problem.upper))
         obj_val = cost_function(x_adv, -1)
     else
-        x_adv = Adversarial.FGSM(flux_model, (x, y)->-cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(-Inf,Inf))
+        x_adv = Adversarial.FGSM(flux_model, (x, y)->-cost_function(x, y), x_0, true_label; ϵ = radius, clamp_range=(problem.lower, problem.upper))
         obj_val = cost_function(x_adv, -1)
     end
     return Result(:success, x_adv, obj_val)

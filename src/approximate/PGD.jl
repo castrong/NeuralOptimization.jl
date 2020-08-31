@@ -22,7 +22,6 @@ function optimize(solver::PGD, problem::Problem, time_limit::Int = 1200)
 
     # only works with hypercube for now
     @assert problem.input isa Hyperrectangle
-    @assert all(r->r==problem.input.radius[1], problem.input.radius)
     radius = problem.input.radius[1]
     x_0 = problem.input.center
     true_label = -1 # this won't matter since our loss function doesn't depend on it
