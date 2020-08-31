@@ -58,8 +58,9 @@ function write_property_file_from_image(input_image_file::String, epsilon::Float
     open(output_file, "w") do f
         # Write the lower and upper bounds on each pixel
         for (index, x_0) in enumerate(input_image)
-            println(f, "x", index-1, " >= ", x_0 - epsilon) # Index -1 since property file specification indexes from 0
-            println(f, "x", index-1, " <= ", x_0 + epsilon) # Index -1 since property file specification indexes from 0
+            # Property file specification indexes from 0. It gets passed in 0-indexed
+            println(f, "x", index, " >= ", x_0 - epsilon)
+            println(f, "x", index, " <= ", x_0 + epsilon)
         end
 
         # Print the objective
@@ -164,6 +165,7 @@ if haskey(config, "mnist")
                 # Create property file from the image
                 property_name = string("mnist_property_", cur_image_file_noext, "_", epsilon, ".txt")
                 property_file = joinpath(properties_output_path, property_name)
+                # Pass in target and label indexed from 0
                 write_property_file_from_image(joinpath(input_image_dir, cur_image_file), epsilon, [1.0, -1.0], [cur_target, cur_label], true, property_file)
 
                 # Add a line to your benchmark file
