@@ -15,6 +15,7 @@ using NPZ # For reading and writing .npy files
 using PyCall # For Marabou, also to read .npz with certain data types unsupported by NPZ
 using BenchmarkTools # For our benchmark timing
 using Requires
+using LinearAlgebra
 
 # # Python libraries that we'll need for Marabou
 py"""
@@ -36,7 +37,6 @@ using Flux;
 #Pkg.add(Pkg.PackageSpec(url="https://github.com/jaypmorgan/Adversarial.jl.git")); # Adversarial.jl
 using Adversarial
 
-using LinearAlgebra
 import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
 
 # For optimization methods:
