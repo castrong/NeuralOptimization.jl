@@ -68,21 +68,26 @@ end
 
 # TODO: Implement time limit
 function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::Int = 60000)
-	# Check if the label is already the target. If so we can return
-	center_output = compute_output(problem.network, problem.center[1])
-	if all(center_output[target] .>= center_output)
-		return MinPerturbationResult(problem.center, 0.0)
-	end
-
 	# Define variables that will be useful for the rest
 	num_outputs = length(problem.network.layers[end].bias)
 	target = problem.target
+	dims = problem.dims
+	# No dims represents use all dims
+	if (dims == [])
+		dims = 1:length(problem.center)
+	end
+
+	# Check if the label is already the target. If so we can return
+	center_output = compute_output(problem.network, problem.center)
+	if all(center_output[target] .>= center_output)
+		return MinPerturbationResult(true, problem.center, 0.0)
+	end
 
 	# Define functions that compute the objective and gradient given an
 	# input x
 	# c * norm(x - x_0) + (- log p(target))
 	function obj_function(x, c)
-		norm_val = norm((x - problem.center)[problem.dims], problem.norm_order)
+		norm_val = norm((x - problem.center)[dims], problem.norm_order)
 		output = compute_output(problem.network, x)
 		softmax_output = softmax(output)
 		cross_entropy = -log(softmax_output[target])
@@ -91,8 +96,8 @@ function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::In
 	function gradient_function(x, c)
 		if (problem.norm_order == Inf)
 			norm_grad = zeros(length(x))
-			index_in_dims = argmax((abs.(x - problem.center))[problem.dims])
-			norm_grad[problem.dims[index_in_dims]] = sign((x - problem.center)[problem.dims[index_in_dims]])
+			index_in_dims = argmax((abs.(x - problem.center))[dims])
+			norm_grad[dims[index_in_dims]] = sign((x - problem.center)[dims[index_in_dims]])
 		elseif(problem.objective == 1)
 			norm_grad = sign.(x - problem.center)
 		else
@@ -117,7 +122,7 @@ function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::In
 	# Perform a binary search over c looking for the largest value of c
 	# that leads to an adversarial example. if c = 0 then we should find a perturbation.
 	# if not, then it's unclear whether larger values of c will lead to one
-	x_0 =  (low(problem.input) + high(problem.input)) / 2.0 # start in the middle of the region
+	x_0 =  problem.center # start in the middle of the region
 	lower_bound_c = 0.0
 	upper_bound_c = 1000.0 # reasonable upper bound for c?
 	best_input = Vector{Float64}() # input associated with the lowest value of c
@@ -140,15 +145,18 @@ function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::In
 			lower_bound_c = c
 			best_input = opt_input
 			# Return result early if you've achieved a norm ~0
-			if norm((best_input - problem.center)[problem.dims], problem.norm_order) <= TOL[]
-				return MinPerturbationResult(best_input, norm((best_input - problem.center)[problem.dims], problem.norm_order))
+			if norm((best_input - problem.center)[dims], problem.norm_order) <= TOL[]
+				return MinPerturbationResult(true, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
 			end
 		else
 			upper_bound_c = c
 		end
 	end
-	@assert (length(best_input) != 0) "Didn't find an adversarial example in LBFGS"
-	return MinPerturbationResult(best_input, norm((best_input - problem.center)[problem.dims], problem.norm_order))
+	if (length(best_input) == 0)
+		@warn "Didn't find an adversarial example in LBFGS"
+		return MinPerturbationResult(false, [Inf], Inf)
+	end
+	return MinPerturbationResult(true, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
 end
 
 function Base.show(io::IO, solver::LBFGS)
