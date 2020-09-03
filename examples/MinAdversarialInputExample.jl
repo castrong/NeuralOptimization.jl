@@ -4,13 +4,12 @@ using NPZ
 using LazySets
 
 # Network and input files
-nnet_file = "./Networks/ACASXu/ACASXU_experimental_v2a_2_8.nnet"
+nnet_file = "./Networks/ACASXu/ACASXU_experimental_v2a_2_7.nnet"
 network = NeuralOptimization.read_nnet(nnet_file)
 # example_input = "./Datasets/MNIST/MNISTlabel_0_index_0_.npy"
 # center_input = vec(npzread(example_input))
-
-input_set = Hyperrectangle(low=[-0.3035311561, -0.0095492967, 0.4933803236, 0.3, 0.3],
-					   high=[-0.2985528119, 0.0095492966, 0.5, 0.5, 0.5])
+input_set = Hyperrectangle(low=[0.6, -0.5, -0.5, 0.45, -0.5],
+					   high=[0.6798577687, 0.5, 0.5, 0.5, -0.45])
 center_input = input_set.center
 
 target = 1
@@ -22,7 +21,7 @@ problem = NeuralOptimization.MinPerturbationProblem(network=network,
 								 target=target,
 								 input=input_set,
 								 norm_order=Inf,
-								 dims = [1])
+								 dims = [1, 2])
 
 NeuralOptimization.optimize(NeuralOptimization.LBFGS(), problem)
 
