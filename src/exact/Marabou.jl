@@ -321,11 +321,10 @@ function init_python_functions()
 			objective_val = max(deltas) # l_inf norm
 			# Have to read the network again because of deallocation issues after the first call
 			network = Marabou.read_nnet(network_file, normalize=False)
-			marabou_optimizer_result = network.evaluateWithMarabou([inputList])[0]
-			print("Deltas from nominal: ", [inputList[i] - centroids[property-1][i] for i in range(len(inputList))])
+			marabou_optimizer_result = network.evaluateWithMarabou([input_vals])[0]
+			print("Deltas from nominal: ", deltas)
 			print("Optimal output: ", marabou_optimizer_result)
 			print("Optimal Objective: ", min(objetive_val))
-
 
 			marabouOptimizerResult = network.evaluateWithMarabou([input_val])
 			objective_value = 0
