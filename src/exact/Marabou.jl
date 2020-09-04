@@ -1,5 +1,5 @@
 """
-    Marabou(optimizer)
+	Marabou(optimizer)
 
 A branch and bound search with frequent bound tightening
 
@@ -16,35 +16,35 @@ Sound and complete
 
 """
 @with_kw struct Marabou
-    usesbt::Bool = false
+	usesbt::Bool = false
 	dividestrategy::String = "ReLUViolation"
 	triangle_relaxation::Bool = false
 end
 
 function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 30)
 	@debug string("Optimizing with: ", solver)
-    @assert problem.input isa Hyperrectangle or problem.input isa HPolytope
-	init_marabou_function()
+	@assert problem.input isa Hyperrectangle or problem.input isa HPolytope
+	init_python_functions()
 
-    # If our last layer is ID we can replace the last layer and combine
-    # it with the objective - shouldn't change performance but is
-    # consistent with the network structure for Sherlock
-    # if (problem.network.layers[end].activation == Id())
+	# If our last layer is ID we can replace the last layer and combine
+	# it with the objective - shouldn't change performance but is
+	# consistent with the network structure for Sherlock
+	# if (problem.network.layers[end].activation == Id())
 	# 	println("in marabou incorporating into single output layer")
-    #     @debug "In Marabou incorporating into single output layer"
-    #     augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
+	#     @debug "In Marabou incorporating into single output layer"
+	#     augmented_network = extend_network_with_objective(problem.network, problem.objective) # If the last layer is ID it won't add a layer
 	# 	augmented_objective = LinearObjective([1.0], [1])
-    #     augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper, problem.lower_bounds, problem.upper_bounds)
-    # else
-        augmented_problem = problem
-    # end
+	#     augmented_problem = OutputOptimizationProblem(augmented_network, problem.input, augmented_objective, problem.max, problem.lower, problem.upper, problem.lower_bounds, problem.upper_bounds)
+	# else
+		augmented_problem = problem
+	# end
 
-    A, b = tosimplehrep(augmented_problem.input)
+	A, b = tosimplehrep(augmented_problem.input)
 	weight_vector = linear_objective_to_weight_vector(augmented_problem.objective, length(augmented_problem.network.layers[end].bias))
 	# account for maximization vs minimization
 	if (!augmented_problem.max)
-        weight_vector = -1.0 * weight_vector
-    end
+		weight_vector = -1.0 * weight_vector
+	end
 
 	# Write the network then run the solver
 	network_file = string(tempname(), ".nnet")
@@ -53,40 +53,46 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
 	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, augmented_problem.lower, augmented_problem.upper, augmented_problem.lower_bounds, augmented_problem.upper_bounds, solver.triangle_relaxation, time_limit)
 
 	# Turn the string status into a symbol to return
-    if (status == "success")
-        status = :success
-    elseif (status == "timeout")
-        status = :timeout
-    else
-        status = :error
-    end
+	if (status == "success")
+		status = :success
+	elseif (status == "timeout")
+		status = :timeout
+	else
+		status = :error
+	end
 
 	# Correct for the maximization vs. minimization
 	if (!problem.max)
-        obj_val = -1.0 * obj_val
-    end
+		obj_val = -1.0 * obj_val
+	end
 	return Result(status, input_val, obj_val)
+
 end
 
-function init_marabou_function()
+function optimize(solver::Marabou, problem::MinPerturbationProblem, time_limit::Int = 30)
+	@assert problem.norm_order == Inf "Only Inf norm currently supported"
+	init_python_functions()
+
+	# Input and output sets
+	A_in, b_in = tosimplehrep(problem.input)
+	A_out, b_out = tosimplehrep(problem.output)
+
+	# Write the network then run the solver
+	network_file = string(tempname(), ".nnet")
+	println(network_file)
+	write_nnet(network_file, problem.network)
+	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit)
+	return MinPerturbationResult(status, input_val, obj_val)
+end
+
+function init_python_functions()
 	py"""
-	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, lower_bounds, upper_bounds, triangle_relaxation, timeout):
-		# Load in the network
-		network = Marabou.read_nnet(network_file, normalize=False)
-		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
-		#network.use_nlr = use_sbt
-		inputVars = network.inputVars.flatten()
-		numInputs = len(inputVars)
 
-		# Set upper and lower on all input variables
-		for var in network.inputVars.flatten():
-		    network.setLowerBound(var, lower)
-		    network.setUpperBound(var, upper)
-
-		# # Add input constraints
+	def encode_polytope(A, b, variables, network):
+		# Add input constraints
 		for row_index in range(A.shape[0]):
-			input_constraint_equation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
-			input_constraint_equation.setScalar(b[row_index])
+			constraint_equation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
+			constraint_equation.setScalar(b[row_index])
 			# First check if this row corresponds to an upper or lower bound on a variable
 			# it will be more efficient to store them in this way
 			all_weights_mag_1 = True
@@ -105,9 +111,9 @@ function init_marabou_function()
 
 			if (all_weights_mag_1 and num_weights == 1):
 				if (mag_weight == 1):
-					network.setUpperBound(inputVars[index], min(b[row_index], upper))
+					network.setUpperBound(variables[index], min(b[row_index], network.upperBounds[variables[index]]))
 				else:
-					network.setLowerBound(inputVars[index], max(-b[row_index], lower))
+					network.setLowerBound(variables[index], max(-b[row_index], network.lowerBounds[variables[index]]))
 
 			# If not, then this row corresponds to some other linear equation - so we'll encode that
 			else:
@@ -116,10 +122,26 @@ function init_marabou_function()
 					if (A[row_index, col_index] != 0):
 						print('Wasnt zero', (row_index, col_index))
 						print('val:', (A[row_index, col_index]))
-						input_constraint_equation.addAddend(A[row_index, col_index], inputVars[col_index])
+						constraint_equation.addAddend(A[row_index, col_index], variables[col_index])
 
-				network.addEquation(input_constraint_equation)
-				print("Adding equation with participating vars", input_constraint_equation.getParticipatingVariables())
+				network.addEquation(constraint_equation)
+				print("Adding equation with participating vars", constraint_equation.getParticipatingVariables())
+		return network
+
+	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, lower_bounds, upper_bounds, triangle_relaxation, timeout):
+		# Load in the network
+		network = Marabou.read_nnet(network_file, normalize=False)
+		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
+		#network.use_nlr = use_sbt
+		inputVars = network.inputVars.flatten()
+		numInputs = len(inputVars)
+
+		# Set upper and lower on all input variables
+		for var in network.inputVars.flatten():
+			network.setLowerBound(var, lower)
+			network.setUpperBound(var, upper)
+
+		network = encode_polytope(A, b, input_vars, network)
 
 		# Add bounds on each node from bound list
 		if (len(lower_bounds) > 0):
@@ -218,8 +240,114 @@ function init_marabou_function()
 			print("Objective value: ", objective_value)
 
 		return (status, input_val, objective_value)
+
+	def min_perturbation_python(center, A_in, b_in, A_out, b_out, dims, norm_order, network_file, use_sbt, divide_strategy, timeout):
+		network = Marabou.read_nnet(network_file, normalize=False)
+		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
+		#network.use_nlr = use_sbt
+
+		input_vars = network.inputVars.flatten()
+		num_inputs = len(input_vars)
+		output_vars = network.outputVars.flatten()
+		num_outputs = len(output_vars)
+
+		# Encode the input and output constraints
+		network = encode_polytope(A_in, b_in, input_vars, network)
+		network = encode_polytope(A_out, b_out, output_vars, network)
+
+		# Setup the objective. Introduce epsilon
+		# and give it an upper and lower bound
+		epsilon = network.getNewVariable() # create a variable that will be optimized. This represents the radius of the hypercube.
+		network.setLowerBound(epsilon, 0.0) # make sure epsilon is non-negative
+		max_interval = 0.0
+		for in_var in input_vars:
+			lower = network.lowerBounds[in_var]
+			upper = network.upperBounds[in_var]
+			max_interval = max(max_interval, upper - lower)
+
+		network.setUpperBound(epsilon, max_interval / 2.0) # epsilon can't be more than half the range of that variable
+
+		# we can only maximize, so introduce a negative radius to maximize.
+		negative_epsilon = network.getNewVariable()
+		negativeEpsilonEquation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.EQ)
+		# epsilon = -negative_epsilon --> epsilon + negative_epsilon = 0.0
+		negativeEpsilonEquation.addAddend(1.0, epsilon)
+		negativeEpsilonEquation.addAddend(1.0, negative_epsilon)
+		negativeEpsilonEquation.setScalar(0.0)
+		network.addEquation(negativeEpsilonEquation)
+		# Introduce the constraints to the input using epsilon
+		for i in range(num_inputs):
+			# Make the relationship with the radius variable
+			if i in dims:
+				# x[i] - centroids[i] <= epsilon --> x[i] - epsilon <= centroids[i]
+				upperBoundEquation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
+				upperBoundEquation.addAddend(1.0, inputVars[i])
+				upperBoundEquation.addAddend(-1.0, epsilon)
+				upperBoundEquation.setScalar(center[i])
+				network.addEquation(upperBoundEquation)
+
+				# centroids[i] - x[i] <= epsilon --> -x[i] - epsilon <= -centroids[i]
+				lowerBoundEquation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
+				lowerBoundEquation.addAddend(-1.0, inputVars[i])
+				lowerBoundEquation.addAddend(-1.0, epsilon)
+				lowerBoundEquation.setScalar(-center[i])
+				network.addEquation(lowerBoundEquation)
+
+		network.setOptimizationVariable(negative_epsilon) # maximize negative_epsilon --> minimize radius epsilon
+		# Set the options
+		options = MarabouCore.Options()
+		options._optimize = True
+		options._verbosity = 0
+		options._timeoutInSeconds = timeout
+		# Parse the divide strategy from a string to its corresponding enum
+		if (divide_strategy == "EarliestReLU"):
+			options._divideStrategy = MarabouCore.DivideStrategy.EarliestReLU
+		elif (divide_strategy == "ReLUViolation"):
+			options._divideStrategy = MarabouCore.DivideStrategy.ReLUViolation
+
+		print("Starting solving")
+		vals, state = network.solve(filename="", options=options)
+		print("Finished solving")
+
+		status = ""
+		input_val = [float("inf")]
+		objective_value = float("inf")
+		if (state.hasTimedOut()):
+			status = "timeout"
+		else:
+			status = "success"
+			input_vals = [vals[i] for i in range(0, num_inputs)]
+			deltas = [input_vals[i] - center[i] for i in range(len(input_vals))]
+			objective_val = max(deltas) # l_inf norm
+			# Have to read the network again because of deallocation issues after the first call
+			network = Marabou.read_nnet(network_file, normalize=False)
+			marabou_optimizer_result = network.evaluateWithMarabou([inputList])[0]
+			print("Deltas from nominal: ", [inputList[i] - centroids[property-1][i] for i in range(len(inputList))])
+			print("Optimal output: ", marabou_optimizer_result)
+			print("Optimal Objective: ", min(objetive_val))
+
+
+			marabouOptimizerResult = network.evaluateWithMarabou([input_val])
+			objective_value = 0
+			for index, coefficient in enumerate(weight_vector):
+				objective_value += coefficient * marabouOptimizerResult[0][index] # odd indexing
+			print("Objective value: ", objective_value)
+
+
+		return (status, input_val, ojective_value)
 	"""
 end
+
+@with_kw struct MinPerturbationProblem{N<: Number} <: Problem
+	network::Network
+	center::Vector{N}
+	target::Int
+	dims::Vector{Int} # Dims that we want to consider as part of the optimization
+	input::Hyperrectangle # Used to add bounds on the input region that we'd like it to hold to
+	output::HPolytope = HPolytope()
+	norm_order::Float64
+end
+
 
 function Base.show(io::IO, solver::Marabou)
 	print(io, string("Marabou_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy))
