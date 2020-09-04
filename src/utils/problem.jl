@@ -91,13 +91,14 @@ end
 
 # A problem based on finding the minimum perturbation to the input
 # on some norm in order to satisfy some constraints on the output
-struct MinPerturbationProblem{P, N<: Number} <: Problem
+@with_kw struct MinPerturbationProblem{N<: Number} <: Problem
 	network::Network
-	center_input::Vector{N}
-	output::HPolytope
-	objective::Symbol # can be :linf
-	lower::Float64
-	upper::Float64
+	center::Vector{N}
+	target::Int
+	dims::Vector{Int} # Dims that we want to consider as part of the optimization
+	input::Hyperrectangle # Used to add bounds on the input region that we'd like it to hold to
+	output::HPolytope = HPolytope()
+	norm_order::Float64
 end
 
 
@@ -107,4 +108,11 @@ struct Result{N<: Number}
     status::Symbol
 	input::Vector{N}
 	objective_value::Float64
+end
+
+struct MinPerturbationResult{N<: Number}
+	# status can be :success, :timeout, :none_found
+	status::Symbol
+	input::Vector{N}
+	perturbation::Float64 # value of the l-1 or l-inf norm for the optimal
 end

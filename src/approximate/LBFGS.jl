@@ -80,7 +80,7 @@ function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::In
 	# Check if the label is already the target. If so we can return
 	center_output = compute_output(problem.network, problem.center)
 	if all(center_output[target] .>= center_output)
-		return MinPerturbationResult(true, problem.center, 0.0)
+		return MinPerturbationResult(:success, problem.center, 0.0)
 	end
 
 	# Define functions that compute the objective and gradient given an
@@ -146,17 +146,17 @@ function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::In
 			best_input = opt_input
 			# Return result early if you've achieved a norm ~0
 			if norm((best_input - problem.center)[dims], problem.norm_order) <= TOL[]
-				return MinPerturbationResult(true, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
+				return MinPerturbationResult(:success, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
 			end
 		else
 			upper_bound_c = c
 		end
 	end
-	if (length(best_input) == 0)
+	if (length(best_ixfnput) == 0)
 		@warn "Didn't find an adversarial example in LBFGS"
-		return MinPerturbationResult(false, [Inf], Inf)
+		return MinPerturbationResult(:none_found, [Inf], Inf)
 	end
-	return MinPerturbationResult(true, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
+	return MinPerturbationResult(:success, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
 end
 
 function Base.show(io::IO, solver::LBFGS)
