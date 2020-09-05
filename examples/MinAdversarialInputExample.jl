@@ -4,26 +4,39 @@ using NPZ
 using LazySets
 
 # Network and input files
-nnet_file = "./Networks/ACASXu/ACASXU_experimental_v2a_2_7.nnet"
+nnet_file = "./Networks/ACASXu/ACASXU_experimental_v2a_2_2.nnet"
 network = NeuralOptimization.read_nnet(nnet_file)
-# example_input = "./Datasets/MNIST/MNISTlabel_0_index_0_.npy"
-# center_input = vec(npzread(example_input))
 input_set = Hyperrectangle(low=[0.6, -0.5, -0.5, 0.45, -0.5],
 					   high=[0.6798577687, 0.5, 0.5, 0.5, -0.45])
 center_input = input_set.center
-
-target = 1
-label = argmax(NeuralOptimization.compute_output(network, center_input))
-println("Label: ", label, "  Target: ", target)
-
 problem = NeuralOptimization.MinPerturbationProblem(network=network,
 								 center=center_input,
 								 target=target,
 								 input=input_set,
 								 norm_order=Inf,
-								 dims = [1, 2])
+								 dims = [1])
 
-NeuralOptimization.optimize(NeuralOptimization.LBFGS(), problem)
+# nnet_file = "./Networks/MNIST/mnist10x20.nnet"
+# network = NeuralOptimization.read_nnet(nnet_file)
+# example_input = "./Datasets/MNIST/MNISTlabel_0_index_0_.npy"
+# center_input = vec(npzread(example_input))
+# radius = 0.5
+# input_set = Hyperrectangle(low=max.(center_input .- radius, 0.0), high=min.(center_input .+ radius, 1.0))
+#
+# target = 3
+# label = argmax(NeuralOptimization.compute_output(network, center_input))
+# println("Label: ", label, "  Target: ", target)
+#
+# problem = NeuralOptimization.MinPerturbationProblem(network=network,
+# 								 center=center_input,
+# 								 target=target,
+# 								 input=input_set,
+# 								 norm_order=Inf,
+# 								 dims = [])
+
+#NeuralOptimization.optimize(NeuralOptimization.LBFGS(), problem)
+NeuralOptimization.optimize(NeuralOptimization.Marabou(), problem, 60)
+
 
 # # A problem based on finding the minimum perturbation to the input
 # # on some norm in order to satisfy some constraints on the output
