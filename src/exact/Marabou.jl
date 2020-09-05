@@ -75,14 +75,25 @@ function optimize(solver::Marabou, problem::MinPerturbationProblem, time_limit::
 
 	# Input and output sets
 	A_in, b_in = tosimplehrep(problem.input)
-	A_out, b_out = tosimplehrep(problem.output)
+	num_outputs = length(problem.network.layers[end].bias)
+	println("Num outputs: ", num_outputs)
+	# If it provides a target, convert that to an output set
+	if (problem.target != Inf)
+		# A matrix with each row corresponding to the target >= other index
+		A_out = Matrix{Float64}(-I, num_outputs, num_outputs)
+		A_out[:, problem.target] .= 1.0
+		A_out = A_out[1:end .!= problem.target, :] # remove the row which would try to do target >= target
+		b_out = zeros(num_outputs - 1)
+	else
+		A_out, b_out = tosimplehrep(output_set)
+	end
 
 	# Write the network then run the solver
 	network_file = string(tempname(), ".nnet")
 	println(network_file)
 	write_nnet(network_file, problem.network)
-	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit)
-	return MinPerturbationResult(status, input_val, obj_val)
+	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims - 1, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit)
+	return MinPerturbationResult(Symbol(status), input_val, obj_val)
 end
 
 function init_python_functions()
@@ -125,7 +136,6 @@ function init_python_functions()
 						constraint_equation.addAddend(A[row_index, col_index], variables[col_index])
 
 				network.addEquation(constraint_equation)
-				print("Adding equation with participating vars", constraint_equation.getParticipatingVariables())
 		return network
 
 	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, lower_bounds, upper_bounds, triangle_relaxation, timeout):
@@ -257,39 +267,35 @@ function init_python_functions()
 
 		# Setup the objective. Introduce epsilon
 		# and give it an upper and lower bound
-		epsilon = network.getNewVariable() # create a variable that will be optimized. This represents the radius of the hypercube.
-		network.setLowerBound(epsilon, 0.0) # make sure epsilon is non-negative
+		# we can only maximize, so introduce a negative radius to maximize
+		negative_epsilon = network.getNewVariable()
+		network.setUpperBound(negative_epsilon, 0.0)
 		max_interval = 0.0
-		for in_var in input_vars:
+		for dim in dims:
+			in_var = input_vars[dim]
 			lower = network.lowerBounds[in_var]
 			upper = network.upperBounds[in_var]
 			max_interval = max(max_interval, upper - lower)
+		network.setLowerBound(negative_epsilon, -max_interval / 2.0) # epsilon can't be more than half the range of that variable
+		print("Max interval: ", max_interval)
 
-		network.setUpperBound(epsilon, max_interval / 2.0) # epsilon can't be more than half the range of that variable
-
-		# we can only maximize, so introduce a negative radius to maximize.
-		negative_epsilon = network.getNewVariable()
-		negativeEpsilonEquation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.EQ)
-		# epsilon = -negative_epsilon --> epsilon + negative_epsilon = 0.0
-		negativeEpsilonEquation.addAddend(1.0, epsilon)
-		negativeEpsilonEquation.addAddend(1.0, negative_epsilon)
-		negativeEpsilonEquation.setScalar(0.0)
-		network.addEquation(negativeEpsilonEquation)
 		# Introduce the constraints to the input using epsilon
 		for i in range(num_inputs):
 			# Make the relationship with the radius variable
 			if i in dims:
 				# x[i] - centroids[i] <= epsilon --> x[i] - epsilon <= centroids[i]
+				# x[i] - centroids[i] <= -(negepsilon) --> x[i] + negepsilon <= centroids[i]
 				upperBoundEquation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
-				upperBoundEquation.addAddend(1.0, inputVars[i])
-				upperBoundEquation.addAddend(-1.0, epsilon)
+				upperBoundEquation.addAddend(1.0, input_vars[i])
+				upperBoundEquation.addAddend(1.0, negative_epsilon)
 				upperBoundEquation.setScalar(center[i])
 				network.addEquation(upperBoundEquation)
 
 				# centroids[i] - x[i] <= epsilon --> -x[i] - epsilon <= -centroids[i]
+				# centroids[i] - x[i] <= -(negepsilon) --> -x[i] + negepsilon <= -centroids[i]
 				lowerBoundEquation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
-				lowerBoundEquation.addAddend(-1.0, inputVars[i])
-				lowerBoundEquation.addAddend(-1.0, epsilon)
+				lowerBoundEquation.addAddend(-1.0, input_vars[i])
+				lowerBoundEquation.addAddend(1.0, negative_epsilon)
 				lowerBoundEquation.setScalar(-center[i])
 				network.addEquation(lowerBoundEquation)
 
@@ -313,6 +319,7 @@ function init_python_functions()
 		input_val = [float("inf")]
 		objective_value = float("inf")
 		if (state.hasTimedOut()):
+			print("Timed out!!!")
 			status = "timeout"
 		else:
 			status = "success"
@@ -324,7 +331,7 @@ function init_python_functions()
 			marabou_optimizer_result = network.evaluateWithMarabou([input_vals])[0]
 			print("Deltas from nominal: ", deltas)
 			print("Optimal output: ", marabou_optimizer_result)
-			print("Optimal Objective: ", min(objetive_val))
+			print("Optimal Objective: ", min(objective_val))
 
 			marabouOptimizerResult = network.evaluateWithMarabou([input_val])
 			objective_value = 0
@@ -332,8 +339,7 @@ function init_python_functions()
 				objective_value += coefficient * marabouOptimizerResult[0][index] # odd indexing
 			print("Objective value: ", objective_value)
 
-
-		return (status, input_val, ojective_value)
+		return (status, input_val, objective_value)
 	"""
 end
 

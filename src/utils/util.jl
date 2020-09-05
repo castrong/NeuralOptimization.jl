@@ -34,8 +34,7 @@ end
     code here: https://github.com/sisl/NNet/blob/master/utils/writeNNet.py.
 """
 function write_nnet(fname::String, network::Network)
-    println("Writting to: ", fname)
-    println("Size last layer: ", size(network.layers[end].weights))
+    println("Writing to: ", fname)
     open(fname, "w") do f
         #####################
         # First, we write the header lines:

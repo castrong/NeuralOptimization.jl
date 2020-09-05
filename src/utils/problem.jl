@@ -94,7 +94,7 @@ end
 @with_kw struct MinPerturbationProblem{N<: Number} <: Problem
 	network::Network
 	center::Vector{N}
-	target::Int
+	target::Int = Inf
 	dims::Vector{Int} # Dims that we want to consider as part of the optimization
 	input::Hyperrectangle # Used to add bounds on the input region that we'd like it to hold to
 	output::HPolytope = HPolytope()
