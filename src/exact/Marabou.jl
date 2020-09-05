@@ -92,7 +92,7 @@ function optimize(solver::Marabou, problem::MinPerturbationProblem, time_limit::
 	network_file = string(tempname(), ".nnet")
 	println(network_file)
 	write_nnet(network_file, problem.network)
-	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims - 1, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit)
+	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims .- 1, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit)
 	return MinPerturbationResult(Symbol(status), input_val, obj_val)
 end
 
