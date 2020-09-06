@@ -111,4 +111,8 @@ export Marabou
 export MarabouBinarySearch
 export MIPVerify
 
+const TOL = Ref(sqrt(eps()))
+set_tolerance(x::Real) = (TOL[] = x)
+export set_tolerance
+
 end
