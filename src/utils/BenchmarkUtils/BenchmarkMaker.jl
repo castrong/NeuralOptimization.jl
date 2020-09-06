@@ -75,6 +75,30 @@ function write_property_file_from_image(input_image_file::String, epsilon::Float
     end
 end
 
+function write_property_file_minadv(input_image_file::String, lower::Float64, upper::Float64, target::Int, num_outputs::Int, output_file::String)
+    input_image = npzread(input_image_file)
+    open(output_file, "w") do f
+        # Write the lower and upper bounds on each pixel
+        for (index, ~) in enumerate(input_image)
+            # Property file specification indexes from 0, so substract one off the index.
+            println(f, "x", index - 1, " >= ", lower)
+            println(f, "x", index - 1, " <= ", upper)
+        end
+
+        # Write the output constraints
+        for out_index in 1:num_outputs
+            if (out_index != target)
+                println(f, "y", target - 1, " >= ", "y", out_index - 1)
+            end
+        end
+
+        # Write the center - the input_image_file
+        println(f, "Center ", string(input_image)[2:end-1]) # 2 --> end-1 to avoid the brackets
+
+        # Write the dimensions to optimize over
+        println(f, "Minimum input perturbation all")
+    end
+end
 
 
 #=
@@ -82,46 +106,108 @@ end
 
 =#
 if haskey(config, "acas")
-    # Load in information for creating acas query
     acas_config = config["acas"]
     network_dir = acas_config["network_dir"]
     property_dir = acas_config["property_dir"]
-    properties = split(acas_config["properties"], " ")
-    number_of_networks = parse.(Int, split(acas_config["number_of_networks"], " "))
-    println("Properties: ", properties)
 
-    for (property, cur_num_networks) in zip(properties, number_of_networks)
-        # Find the property to copy
-        println("Current property: ", property)
-        property_name = string("acas_property_optimization_", property, ".txt")
-        property_file = joinpath(root_dir, property_dir, property_name)
+    if haskey(config["acas"], "output")
+        # Load in information for creating acas query
+        acas_output_config = config["acas"]["output"]
+        properties = split(acas_output_config["properties"], " ")
+        number_of_networks = parse.(Int, split(acas_output_config["number_of_networks"], " "))
+        println("Properties: ", properties)
 
-        # Copy to our property file
-        property_output_file = joinpath(properties_output_path, property_name)
-        cp(property_file, property_output_file, force=true) # will write several times if multiple properties
-        println("Copied to: ", property_output_file)
+        for (property, cur_num_networks) in zip(properties, number_of_networks)
+            # Find the property to copy
+            property_name = string("acas_property_optimization_", property, ".txt")
+            property_file = joinpath(root_dir, property_dir, property_name)
 
-        cur_count = 0
-        # Copy over the network files
-        for i = 1:5
-            for j = 1:9
-                network_name = string("ACASXU_experimental_v2a_", i, "_", j, ".nnet")
-                network_file = joinpath(root_dir, network_dir, network_name)
-                network_output_file = joinpath(networks_output_path, network_name)
-                cp(network_file, network_output_file, force=true) # will write several times if multiple properties
+            # Copy to our property file
+            property_output_file = joinpath(properties_output_path, property_name)
+            cp(property_file, property_output_file, force=true) # will write several times if multiple properties
 
-                # Add a line to your benchmark file
-                open(benchmarks_file, "a") do f
-                    println(f, network_output_file, " ", property_output_file)
+            cur_count = 0
+            # Copy over the network files
+            for i = 1:5
+                for j = 1:9
+                    network_name = string("ACASXU_experimental_v2a_", i, "_", j, ".nnet")
+                    network_file = joinpath(root_dir, network_dir, network_name)
+                    network_output_file = joinpath(networks_output_path, network_name)
+                    cp(network_file, network_output_file, force=true) # will write several times if multiple properties
+
+                    # Add a line to your benchmark file
+                    open(benchmarks_file, "a") do f
+                        println(f, network_output_file, " ", property_output_file)
+                    end
+
+                    cur_count = cur_count + 1
+                    if (cur_count >= cur_num_networks)
+                        break
+                    end
                 end
-
-                cur_count = cur_count + 1
                 if (cur_count >= cur_num_networks)
                     break
                 end
             end
-            if (cur_count >= cur_num_networks)
-                break
+        end
+    end
+    if (haskey(config["acas"], "min_input"))
+        acas_input_config = config["acas"]["min_input"]
+        properties = split(acas_input_config["properties"], " ")
+        number_of_networks = parse.(Int, split(acas_input_config["number_of_networks"], " "))
+        dims = split(acas_input_config["dims"], " ")
+        targets = parse.(Int, split(acas_input_config["target"], " "))
+        max_targets = split(acas_input_config["max_target"], " ")
+
+
+        for (property, cur_num_networks) in zip(properties, number_of_networks)
+            # Find the property to copy
+            property_name = string("acas_property_optimization_", property, ".txt")
+            property_file = joinpath(root_dir, property_dir, property_name)
+
+            for (dim_list, target, max_target) in zip(dims, targets, max_targets)
+                property_lines = readlines(property_file)
+                # Add in output constraints
+                for out_index = 1:5
+                    if out_index != target
+                        push!(property_lines, string("y", target - 1, max_target=="max" ? " >= " : " <= ", "y", out_index - 1))
+                    end
+                end
+
+                # remove the objective
+                filter!(line -> !(occursin("Maximize", line) || occursin("Minimize", line)), property_lines)
+                # Add the minimum input perturbation dimensions
+                push!(property_lines, "Minimum Input Perturbation "*dim_list)
+                property_output_file = joinpath(properties_output_path, string("acas_property_", property, "_mininput_", dim_list, "_target_", target, "_maxtarget_", max_target, ".txt"))
+
+                # Write to file
+                open(property_output_file, "w") do f
+                    write(f, join(property_lines, "\n"))
+                end
+
+                cur_count = 0
+                # Copy over the network files
+                for i = 1:5
+                    for j = 1:9
+                        network_name = string("ACASXU_experimental_v2a_", i, "_", j, ".nnet")
+                        network_file = joinpath(root_dir, network_dir, network_name)
+                        network_output_file = joinpath(networks_output_path, network_name)
+                        cp(network_file, network_output_file, force=true) # will write several times if multiple properties
+
+                        # Add a line to your benchmark file
+                        open(benchmarks_file, "a") do f
+                            println(f, network_output_file, " ", property_output_file)
+                        end
+
+                        cur_count = cur_count + 1
+                        if (cur_count >= cur_num_networks)
+                            break
+                        end
+                    end
+                    if (cur_count >= cur_num_networks)
+                        break
+                    end
+                end
             end
         end
     end
@@ -137,39 +223,77 @@ label_to_target = Dict([0 => 6, 1 => 7, 2 => 3, 3 => 2, 4 => 9, 5 => 8, 6 => 0, 
 if haskey(config, "mnist")
     mnist_config = config["mnist"]
     network_dir = mnist_config["network_dir"]
-    architectures = split(mnist_config["architectures"], " ")
     input_image_dir = mnist_config["input_image_dir"]
     start_file_name = mnist_config["start_file_name"]
-    number_of_images = parse.(Int, split(mnist_config["number_of_images"], " "))
-    epsilons = parse.(Float64, split(mnist_config["epsilons"], " "))
 
-    # Find the possible inputs
-    files = filter(f->startswith(f, start_file_name), readdir(input_image_dir))
-    # Shuffle files to choose random set
-    shuffle!(files)
+    if (haskey(config["mnist"], "output"))
+        mnist_output_config = config["mnist"]["output"]
+        architectures = split(mnist_output_config["architectures"], " ")
+        number_of_images = parse.(Int, split(mnist_output_config["number_of_images"], " "))
+        epsilons = parse.(Float64, split(mnist_output_config["epsilons"], " "))
 
-    for (architecture, num_images) in zip(architectures, number_of_images)
-        # Copy over the network file
-        network_name = string("mnist", architecture, ".nnet")
-        network_file = joinpath(root_dir, network_dir, network_name)
-        network_output_file = joinpath(networks_output_path, network_name)
-        cp(network_file, network_output_file, force=true)
+        # Find the possible inputs
+        files = filter(f->startswith(f, start_file_name), readdir(input_image_dir))
+        # Shuffle files to choose random set
+        shuffle!(files)
 
-        for image_index = 1:num_images
-            cur_image_file = files[image_index]
-            cur_image_file_noext, ext = splitext(cur_image_file)
-            cur_label = parse(Int64, split(cur_image_file_noext, "_")[2])
-            cur_target = label_to_target[cur_label]
+        for (architecture, num_images) in zip(architectures, number_of_images)
+            # Copy over the network file
+            network_name = string("mnist", architecture, ".nnet")
+            network_file = joinpath(root_dir, network_dir, network_name)
+            network_output_file = joinpath(networks_output_path, network_name)
+            cp(network_file, network_output_file, force=true)
 
-            for epsilon in epsilons
-                # Create property file from the image
-                property_name = string("mnist_property_", cur_image_file_noext, "_", epsilon, ".txt")
+            for image_index = 1:num_images
+                cur_image_file = files[image_index]
+                cur_image_file_noext, ext = splitext(cur_image_file)
+                cur_label = parse(Int64, split(cur_image_file_noext, "_")[2])
+                cur_target = label_to_target[cur_label]
+
+                for epsilon in epsilons
+                    # Create property file from the image
+                    property_name = string("mnist_property_", cur_image_file_noext, "_", epsilon, ".txt")
+                    property_file = joinpath(properties_output_path, property_name)
+                    # Pass in target and label, switch to indexing from 1 instead of 0
+                    # (the filename indexes from 0)
+                    write_property_file_from_image(joinpath(input_image_dir, cur_image_file), epsilon, [1.0, -1.0], [cur_target+1, cur_label+1], true, property_file)
+
+                    # Add a line to your benchmark file
+                    open(benchmarks_file, "a") do f
+                        println(f, network_output_file, " ", property_file)
+                    end
+                end
+            end
+        end
+    end
+    if(haskey(config["mnist"], "min_input"))
+        println("Making min input for mnist")
+        mnist_input_config = config["mnist"]["min_input"]
+        architectures = split(mnist_output_config["architectures"], " ")
+        number_of_images = parse.(Int, split(mnist_output_config["number_of_images"], " "))
+
+        # Find the possible inputs
+        files = filter(f->startswith(f, start_file_name), readdir(input_image_dir))
+        # Shuffle files to choose random set
+        shuffle!(files)
+
+        for (architecture, num_images) in zip(architectures, number_of_images)
+            # Copy over the network file
+            network_name = string("mnist", architecture, ".nnet")
+            network_file = joinpath(root_dir, network_dir, network_name)
+            network_output_file = joinpath(networks_output_path, network_name)
+            cp(network_file, network_output_file, force=true)
+
+            for image_index = 1:num_images
+                cur_image_file = files[image_index]
+                cur_image_file_noext, ext = splitext(cur_image_file)
+                cur_label = parse(Int64, split(cur_image_file_noext, "_")[2])
+                cur_target = label_to_target[cur_label]
+                property_name = string("mnist_property_mininput_", cur_image_file_noext, "_", cur_target, ".txt")
                 property_file = joinpath(properties_output_path, property_name)
-                # Pass in target and label, switch to indexing from 1 instead of 0
-                # (the filename indexes from 0)
-                write_property_file_from_image(joinpath(input_image_dir, cur_image_file), epsilon, [1.0, -1.0], [cur_target+1, cur_label+1], true, property_file)
+                write_property_file_minadv(joinpath(input_image_dir, cur_image_file), 0.0, 1.0, cur_target+1, 10, property_file)
 
-                # Add a line to your benchmark file
+                # Add a line to oyour benchmark file
                 open(benchmarks_file, "a") do f
                     println(f, network_output_file, " ", property_file)
                 end
