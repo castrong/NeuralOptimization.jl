@@ -4,15 +4,31 @@ global:
 acas:
     network_dir: Networks/ACASXu
     property_dir: OptimizationProperties/ACASXu
-    properties: 1 2 3 4 1_quarterall 1_halfall 1_quartersplit1
-    number_of_networks: 2 2 2 2 2 2 2
+    output:
+        properties: 1 2 3 4 1_quarterall 1_halfall 1_quartersplit1
+        number_of_networks: 2 2 2 2 2 2 2
+
+    min_input:
+        properties: 2 2 2 2 2
+        dims: 1,2,3 2,4 3 4 all
+        target: 2 2 3 1 2
+        max_target: max min max max min
+        number_of_networks: 2 2 2 2
+
 mnist:
     network_dir: Networks/MNIST
-    architectures: 10x20 20x20
     input_image_dir: Datasets/MNIST
     start_file_name: MNIST
-    number_of_images: 2 2
-    epsilons: 0.01 0.02 0.04
+
+    output:
+        architectures: 10x20 20x20
+        number_of_images: 2 2
+        epsilons: 0.01 0.02 0.04
+
+    min_input:
+        architectures: 10x20 20x20
+        number_of_images: 2 2
+
 taxinet:
     network_dir: Networks/AutoTaxi
     architectures: 32 64
