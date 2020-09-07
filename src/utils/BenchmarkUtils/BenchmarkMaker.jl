@@ -159,7 +159,6 @@ if haskey(config, "acas")
         targets = parse.(Int, split(acas_input_config["target"], " "))
         max_targets = split(acas_input_config["max_target"], " ")
 
-
         for (property, cur_num_networks) in zip(properties, number_of_networks)
             # Find the property to copy
             property_name = string("acas_property_optimization_", property, ".txt")
@@ -177,9 +176,14 @@ if haskey(config, "acas")
                 # remove the objective
                 filter!(line -> !(occursin("Maximize", line) || occursin("Minimize", line)), property_lines)
                 # Add the minimum input perturbation dimensions
-                push!(property_lines, "Minimum Input Perturbation "*dim_list)
-                property_output_file = joinpath(properties_output_path, string("acas_property_", property, "_mininput_", dim_list, "_target_", target, "_maxtarget_", max_target, ".txt"))
+                if (dim_list == "all")
+                    dim_str = "all"
+                else
+                    dim_str = join(string.(parse.(Int64, split(dim_list, ",")) .- 1), ",") # adjust to index from 0
+                end
+                push!(property_lines, "Minimum Input Perturbation "*dim_str)
 
+                property_output_file = joinpath(properties_output_path, string("acas_property_", property, "_mininput_", dim_list, "_target_", target, "_maxtarget_", max_target, ".txt"))
                 # Write to file
                 open(property_output_file, "w") do f
                     write(f, join(property_lines, "\n"))
