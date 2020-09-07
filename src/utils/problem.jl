@@ -95,6 +95,7 @@ end
 	network::Network
 	center::Vector{N}
 	target::Int = Inf
+	target_dir::String = "max"
 	dims::Vector{Int} # Dims that we want to consider as part of the optimization
 	input::Hyperrectangle # Used to add bounds on the input region that we'd like it to hold to
 	output::HPolytope = HPolytope()

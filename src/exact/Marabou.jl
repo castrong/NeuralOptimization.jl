@@ -343,17 +343,6 @@ function init_python_functions()
 	"""
 end
 
-@with_kw struct MinPerturbationProblem{N<: Number} <: Problem
-	network::Network
-	center::Vector{N}
-	target::Int
-	dims::Vector{Int} # Dims that we want to consider as part of the optimization
-	input::Hyperrectangle # Used to add bounds on the input region that we'd like it to hold to
-	output::HPolytope = HPolytope()
-	norm_order::Float64
-end
-
-
 function Base.show(io::IO, solver::Marabou)
 	print(io, string("Marabou_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy))
 end
