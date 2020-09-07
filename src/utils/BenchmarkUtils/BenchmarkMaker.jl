@@ -95,6 +95,9 @@ function write_property_file_minadv(input_image_file::String, lower::Float64, up
         # Write the center - the input_image_file
         println(f, "Center ", string(input_image)[2:end-1]) # 2 --> end-1 to avoid the brackets
 
+        # Write out the target
+        println(f, "Target ", target - 1, ", ", "max")
+
         # Write the dimensions to optimize over
         println(f, "Minimum input perturbation all")
     end
@@ -157,21 +160,24 @@ if haskey(config, "acas")
         number_of_networks = parse.(Int, split(acas_input_config["number_of_networks"], " "))
         dims = split(acas_input_config["dims"], " ")
         targets = parse.(Int, split(acas_input_config["target"], " "))
-        max_targets = split(acas_input_config["max_target"], " ")
+        target_dirs = split(acas_input_config["target_dir"], " ")
 
         for (property, cur_num_networks) in zip(properties, number_of_networks)
             # Find the property to copy
             property_name = string("acas_property_optimization_", property, ".txt")
             property_file = joinpath(root_dir, property_dir, property_name)
 
-            for (dim_list, target, max_target) in zip(dims, targets, max_targets)
+            for (dim_list, target, target_dir) in zip(dims, targets, target_dirs)
                 property_lines = readlines(property_file)
                 # Add in output constraints
                 for out_index = 1:5
                     if out_index != target
-                        push!(property_lines, string("y", target - 1, max_target=="max" ? " >= " : " <= ", "y", out_index - 1))
+                        push!(property_lines, string("y", target - 1, target_dir=="max" ? " >= " : " <= ", "y", out_index - 1))
                     end
                 end
+
+                # Write out the target
+                push!(property_lines, string("Target ", target - 1, ", ", target_dir))
 
                 # remove the objective
                 filter!(line -> !(occursin("Maximize", line) || occursin("Minimize", line)), property_lines)
@@ -183,7 +189,7 @@ if haskey(config, "acas")
                 end
                 push!(property_lines, "Minimum Input Perturbation "*dim_str)
 
-                property_output_file = joinpath(properties_output_path, string("acas_property_", property, "_mininput_", dim_list, "_target_", target, "_maxtarget_", max_target, ".txt"))
+                property_output_file = joinpath(properties_output_path, string("acas_property_", property, "_mininput_", dim_list, "_target_", target, "_maxtarget_", target_dir, ".txt"))
                 # Write to file
                 open(property_output_file, "w") do f
                     write(f, join(property_lines, "\n"))

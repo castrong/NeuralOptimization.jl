@@ -12,7 +12,7 @@ acas:
         properties: 2 2 2 2 2
         dims: 1,2,3 2,4 3 4 all
         target: 2 2 3 1 2
-        max_target: max min max max min
+        target_dir: max min max max min
         number_of_networks: 2 2 2 2
 
 mnist:
