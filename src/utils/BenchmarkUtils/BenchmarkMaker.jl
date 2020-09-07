@@ -88,7 +88,7 @@ function write_property_file_minadv(input_image_file::String, lower::Float64, up
         # Write the output constraints
         for out_index in 1:num_outputs
             if (out_index != target)
-                println(f, "y", target - 1, " >= ", "y", out_index - 1)
+                println(f, "y", target - 1, " - y", out_index - 1, " >= ", 0.0)
             end
         end
 
@@ -172,7 +172,7 @@ if haskey(config, "acas")
                 # Add in output constraints
                 for out_index = 1:5
                     if out_index != target
-                        push!(property_lines, string("y", target - 1, target_dir=="max" ? " >= " : " <= ", "y", out_index - 1))
+                        push!(property_lines, string("y", target - 1, " - y", out_index - 1, target_dir=="max" ? " >= " : " <= ", 0.0))
                     end
                 end
 
