@@ -145,7 +145,7 @@ function parse_sum(str, char)
     end
 
     terms = String.(split(str, "+"))
-    coeff_strs = [term[1:findfirst(char, term) - 1] for term in terms]
+    coeff_strs = [term[1:findfirst(string(char), term)[1] - 1] for term in terms]
     coeff_strs = map(elem -> elem == "" ? "1.0" : elem, coeff_strs) # replace empty coefficients with 1
     coeff_strs = map(elem -> elem == "-" ? "-1.0" : elem, coeff_strs) # replace - with -1.0
     coefficients = parse.(Float64, coeff_strs)
