@@ -149,7 +149,7 @@ function parse_sum(str, char)
     coeff_strs = map(elem -> elem == "" ? "1.0" : elem, coeff_strs) # replace empty coefficients with 1
     coeff_strs = map(elem -> elem == "-" ? "-1.0" : elem, coeff_strs) # replace - with -1.0
     coefficients = parse.(Float64, coeff_strs)
-    vars = parse.(Int, [term[findfirst(char, term) + 1:end] for term in terms])
+    vars = parse.(Int, [term[findfirst(string(char), term)[1] + 1:end] for term in terms])
     return coefficients, vars
 end
 
