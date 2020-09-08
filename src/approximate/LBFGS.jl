@@ -68,6 +68,7 @@ end
 
 # TODO: Implement time limit
 function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::Int = 60000)
+	@assert (problem.target_dir == "max") "Only support max direction for now"
 	# Define variables that will be useful for the rest
 	num_outputs = length(problem.network.layers[end].bias)
 	target = problem.target
@@ -152,7 +153,7 @@ function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::In
 			upper_bound_c = c
 		end
 	end
-	if (length(best_ixfnput) == 0)
+	if (length(best_input) == 0)
 		@warn "Didn't find an adversarial example in LBFGS"
 		return MinPerturbationResult(:none_found, [Inf], Inf)
 	end
