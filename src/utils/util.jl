@@ -152,6 +152,9 @@ function property_file_to_problem(filename::String, network::Network, lower::Flo
 
     input_lower = lower * ones(num_inputs)
     input_upper = upper * ones(num_inputs)
+    obj_coeffs = []
+    obj_vars = []
+    maximize_objective = true
     target = Inf
     target_dir = "max"
     center = Vector{Float64}()
