@@ -99,7 +99,7 @@ function write_property_file_minadv(input_image_file::String, lower::Float64, up
         println(f, "Target ", target - 1, ", ", "max")
 
         # Write the dimensions to optimize over
-        println(f, "Minimum input perturbation all")
+        println(f, "Minimum Input Perturbation all")
     end
 end
 
