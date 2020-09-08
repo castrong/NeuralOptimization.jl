@@ -13,7 +13,7 @@ Approximate
 
 """
 @with_kw struct LBFGS
-    ϵ = 1e-2
+    ϵ = 0.1
 end
 
 function optimize(solver::LBFGS, problem::OutputOptimizationProblem, time_limit::Int = 60000)
@@ -125,7 +125,7 @@ function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::In
 	# if not, then it's unclear whether larger values of c will lead to one
 	x_0 =  problem.center # start in the middle of the region
 	lower_bound_c = 0.0
-	upper_bound_c = 1000.0 # reasonable upper bound for c?
+	upper_bound_c = 100.0 # reasonable upper bound for c?
 	best_input = Vector{Float64}() # input associated with the lowest value of c
 	# If a value of c leads to an example this will be the lower bound on c
 	# if it doesn't then this is an upper bound on c
