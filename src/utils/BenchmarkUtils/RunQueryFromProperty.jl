@@ -102,11 +102,9 @@ if !isfile(result_file)
 		@assert false "Network category unrecognized"
 	end
 
-
+	# Read your problem using the property file
+	# then run and time the optimizer
 	problem = NeuralOptimization.property_file_to_problem(property_file, network, lower, upper)
-	# input_set, objective, maximize_objective = NeuralOptimization.read_property_file(property_file, num_inputs; lower=lower, upper=upper)
-	# problem = NeuralOptimization.OutputOptimizationProblem(network=network, input=input_set, objective=objective, max=maximize_objective, lower=lower, upper=upper)
-
 	CPUtic()
 	result = NeuralOptimization.optimize(optimizer, problem, timeout)
 	elapsed_time = CPUtoc()
