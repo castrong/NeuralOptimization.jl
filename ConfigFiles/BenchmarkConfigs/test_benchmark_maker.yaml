@@ -28,6 +28,7 @@ mnist:
     min_input:
         architectures: 10x20 20x20
         number_of_images: 2 2
+        max_epsilon: 0.1
 
 taxinet:
     network_dir: Networks/AutoTaxi

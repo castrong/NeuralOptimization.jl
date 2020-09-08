@@ -174,7 +174,6 @@ function property_file_to_problem(filename::String, network::Network, lower::Flo
     for line in lines
         # Remove spaces from all lines
         line = replace(line, " " => "")
-        println("Line: ", line)
 
         # Objective line
         if occursin("Maximize", line) || occursin("Minimize", line)
@@ -184,7 +183,6 @@ function property_file_to_problem(filename::String, network::Network, lower::Flo
             line = line[length("Maximize")+1:end]
             obj_coeffs, obj_vars = parse_sum(line, 'y')
             obj_vars = obj_vars .+ 1 # switch to julia indexing from 1
-            println("Obj coeffs: ", obj_coeffs, " Obj vars: ", obj_vars)
         elseif occursin("MinimumInputPerturbation", line)
             min_adv = true
             line = line[length("MinimumInputPerturbation")+1:end]
@@ -193,15 +191,12 @@ function property_file_to_problem(filename::String, network::Network, lower::Flo
             else
                 dims = parse.(Int64, split(line, ","))
             end
-            println("Dims: ", dims)
         elseif occursin("Center", line)
             center = parse.(Float64, split(line[length("Center")+1:end], ","))
-            println("Center: ", center)
         elseif occursin("Target", line)
             line = line[length("Target")+1:end]
             target_str, target_dir = split(line, ",")
             target = parse(Int, target_str) + 1 # switch to julia indexing from 1
-            println("Target: ", target, " dir: ", target_dir)
         # Must be an input or an output constraint
         else
             var_char = 'x'
@@ -213,7 +208,6 @@ function property_file_to_problem(filename::String, network::Network, lower::Flo
             coeffs, vars = parse_sum(line[1:comparator_start-1], var_char)
             vars = vars .+ 1 # switch to julia indexing from 1
             scalar = parse(Float64, line[comparator_start+2:end])
-            println("Coeffs: ", coeffs, " Vars: ", vars, " Scalar: ", scalar)
 
             if (var_char == 'x')
                 @assert (length(coeffs) == 1 && coeffs[1] == 1.0)  # make sure that we only have upper or lower bounds on the input

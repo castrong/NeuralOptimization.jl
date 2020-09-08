@@ -75,14 +75,14 @@ function write_property_file_from_image(input_image_file::String, epsilon::Float
     end
 end
 
-function write_property_file_minadv(input_image_file::String, lower::Float64, upper::Float64, target::Int, num_outputs::Int, output_file::String)
+function write_property_file_minadv(input_image_file::String, max_eps::Float64, target::Int, num_outputs::Int, output_file::String)
     input_image = npzread(input_image_file)
     open(output_file, "w") do f
         # Write the lower and upper bounds on each pixel
-        for (index, ~) in enumerate(input_image)
+        for (index, x_0) in enumerate(input_image)
             # Property file specification indexes from 0, so substract one off the index.
-            println(f, "x", index - 1, " >= ", lower)
-            println(f, "x", index - 1, " <= ", upper)
+            println(f, "x", index - 1, " >= ", x_0 - max_eps)
+            println(f, "x", index - 1, " <= ", x_0 + max_eps)
         end
 
         # Write the output constraints
@@ -281,6 +281,7 @@ if haskey(config, "mnist")
         mnist_input_config = config["mnist"]["min_input"]
         architectures = split(mnist_output_config["architectures"], " ")
         number_of_images = parse.(Int, split(mnist_output_config["number_of_images"], " "))
+        max_eps = mnist_input_config["max_epsilon"]
 
         # Find the possible inputs
         files = filter(f->startswith(f, start_file_name), readdir(input_image_dir))
@@ -301,7 +302,7 @@ if haskey(config, "mnist")
                 cur_target = label_to_target[cur_label]
                 property_name = string("mnist_property_mininput_", cur_image_file_noext, "_", cur_target, ".txt")
                 property_file = joinpath(properties_output_path, property_name)
-                write_property_file_minadv(joinpath(input_image_dir, cur_image_file), 0.0, 1.0, cur_target+1, 10, property_file)
+                write_property_file_minadv(joinpath(input_image_dir, cur_image_file), max_eps, cur_target+1, 10, property_file)
 
                 # Add a line to oyour benchmark file
                 open(benchmarks_file, "a") do f
