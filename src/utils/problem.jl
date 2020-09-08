@@ -115,5 +115,5 @@ struct MinPerturbationResult{N<: Number}
 	# status can be :success, :timeout, :none_found
 	status::Symbol
 	input::Vector{N}
-	perturbation::Float64 # value of the l-1 or l-inf norm for the optimal
+	objective_value::Float64 # value of the l-1 or l-inf norm for the optimal
 end
