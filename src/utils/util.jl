@@ -137,7 +137,13 @@ function parse_sum(str, char)
     # after this, all terms are separated by a +
     str = replace(str, "--"=>"+")
     str = replace(str, "-+"=>"+-")
-    str = replace(str, "-"=>"+-")
+    str = replace(str, "+-"=>"-") # remove any already existing +-s. For example x1 + -x2 --> x1 - x2
+    str = replace(str, "-"=>"+-") # turn any - into a +-. x1 - x2 --> x1 + -x2.
+    # Edge case if we start with a - we end up with +- at the very beginning
+    if (str[1] == '+')
+        str = str[2:end]
+    end
+
     terms = String.(split(str, "+"))
     coeff_strs = [term[1:findfirst(char, term) - 1] for term in terms]
     coeff_strs = map(elem -> elem == "" ? "1.0" : elem, coeff_strs) # replace empty coefficients with 1
@@ -146,6 +152,7 @@ function parse_sum(str, char)
     vars = parse.(Int, [term[findfirst(char, term) + 1:end] for term in terms])
     return coefficients, vars
 end
+
 function property_file_to_problem(filename::String, network::Network, lower::Float64, upper::Float64)
     num_inputs = size(network.layers[1].weights, 2)
     num_outputs = length(network.layers[end].bias)
