@@ -143,8 +143,8 @@ function init_python_functions()
 		network = Marabou.read_nnet(network_file, normalize=False)
 		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
 		#network.use_nlr = use_sbt
-		inputVars = network.inputVars.flatten()
-		numInputs = len(inputVars)
+		input_vars = network.inputVars.flatten()
+		numInputs = len(input_vars)
 
 		# Set upper and lower on all input variables
 		for var in network.inputVars.flatten():
