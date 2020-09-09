@@ -228,8 +228,6 @@ function property_file_to_problem(filename::String, network::Network, lower::Flo
 
     # Return an output objective problem
     @assert !(output_obj && min_adv) "Both output and min_adv objectives found in file"
-    println("lower: ", input_lower)
-    println("Upper: ", input_upper)
     if (output_obj)
         return OutputOptimizationProblem(
                                             network=network,

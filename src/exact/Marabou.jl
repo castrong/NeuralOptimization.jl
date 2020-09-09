@@ -198,7 +198,7 @@ function init_python_functions()
 		# Set the options
 		options = MarabouCore.Options()
 		options._optimize = True
-		options._verbosity = 0
+		options._verbosity = 1
 		options._timeoutInSeconds = timeout
 		# Parse the divide strategy from a string to its corresponding enum
 		if (divide_strategy == "EarliestReLU"):
@@ -315,12 +315,16 @@ function init_python_functions()
 		vals, state = network.solve(filename="", options=options)
 		print("Finished solving")
 
+		# No solution
 		status = ""
 		input_val = [float("inf")]
 		objective_value = float("inf")
+
+
 		if (state.hasTimedOut()):
-			print("Timed out!!!")
 			status = "timeout"
+		elif (len(vals) == 0):
+			status = "infeasible"
 		else:
 			status = "success"
 			input_vals = [vals[i] for i in range(0, num_inputs)]
