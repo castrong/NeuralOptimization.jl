@@ -205,7 +205,10 @@ function init_python_functions()
 			options._divideStrategy = MarabouCore.DivideStrategy.EarliestReLU
 		elif (divide_strategy == "ReLUViolation"):
 			options._divideStrategy = MarabouCore.DivideStrategy.ReLUViolation
-
+		elif (divide_strategy == "LargestInterval"):
+			options._divideStrategy = MarabouCore.DivideStrategy.LargestInterval
+		elif (divide_strategy == "Auto"):
+			options._divideStrategy = MarabouCore.DivideStrategy.Auto
 
 		# Add the optimization equation of the form
 		# previous_addends - cost_fcn_var = 0 --> previous_addends = cost_fcn_var
@@ -310,6 +313,10 @@ function init_python_functions()
 			options._divideStrategy = MarabouCore.DivideStrategy.EarliestReLU
 		elif (divide_strategy == "ReLUViolation"):
 			options._divideStrategy = MarabouCore.DivideStrategy.ReLUViolation
+		elif (divide_strategy == "LargestInterval"):
+			options._divideStrategy = MarabouCore.DivideStrategy.LargestInterval
+		elif (divide_strategy == "Auto"):
+			options._divideStrategy = MarabouCore.DivideStrategy.Auto
 
 		print("Starting solving")
 		vals, state = network.solve(filename="", options=options)
