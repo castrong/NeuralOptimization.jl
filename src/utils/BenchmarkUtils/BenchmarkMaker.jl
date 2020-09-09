@@ -279,8 +279,8 @@ if haskey(config, "mnist")
     if(haskey(config["mnist"], "min_input"))
         println("Making min input for mnist")
         mnist_input_config = config["mnist"]["min_input"]
-        architectures = split(mnist_output_config["architectures"], " ")
-        number_of_images = parse.(Int, split(mnist_output_config["number_of_images"], " "))
+        architectures = split(mnist_input_config["architectures"], " ")
+        number_of_images = parse.(Int, split(mnist_input_config["number_of_images"], " "))
         max_eps = mnist_input_config["max_epsilon"]
 
         # Find the possible inputs
