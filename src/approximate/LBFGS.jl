@@ -155,7 +155,7 @@ function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::In
 	end
 	if (length(best_input) == 0)
 		@warn "Didn't find an adversarial example in LBFGS"
-		return MinPerturbationResult(:none_found, [Inf], Inf)
+		return MinPerturbationResult(:infeasible, [Inf], Inf)
 	end
 	return MinPerturbationResult(:success, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
 end
