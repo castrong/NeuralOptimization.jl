@@ -13,10 +13,10 @@ Approximate
 
 """
 @with_kw struct LBFGS
-    dummy_var = 1
+    ϵ = 0.1
 end
 
-function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
+function optimize(solver::LBFGS, problem::OutputOptimizationProblem, time_limit::Int = 60000)
     @debug string("Optimizing with: ", solver)
     # Assert the problem takes the necessary format
     # restriction from Optim, where we're getting our implementation
@@ -35,10 +35,6 @@ function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
     obj_coefficient = 1.0
 
     nnet = augmented_problem.network;
-
-    function obj_function(x)
-        compute_output(augmented_problem.network)
-    end
 
     input_set = augmented_problem.input
     input_lower = max.(input_set.center - input_set.radius, augmented_problem.lower * ones(num_inputs));
@@ -68,6 +64,100 @@ function optimize(solver::LBFGS, problem::Problem, time_limit::Int = 1200)
     @debug "Result from LBFGS: " result
 
     return Result(:success, result.minimizer, opt_val)
+end
+
+# TODO: Implement time limit
+function optimize(solver::LBFGS, problem::MinPerturbationProblem, time_limit::Int = 60000)
+	@assert (problem.target_dir == "max") "Only support max direction for now"
+	# Define variables that will be useful for the rest
+	num_outputs = length(problem.network.layers[end].bias)
+	target = problem.target
+	dims = problem.dims
+	# No dims represents use all dims
+	if (dims == [])
+		dims = 1:length(problem.center)
+	end
+
+	# Check if the label is already the target. If so we can return
+	center_output = compute_output(problem.network, problem.center)
+	if all(center_output[target] .>= center_output)
+		return MinPerturbationResult(:success, problem.center, 0.0)
+	end
+
+	# Define functions that compute the objective and gradient given an
+	# input x
+	# c * norm(x - x_0) + (- log p(target))
+	function obj_function(x, c)
+		norm_val = norm((x - problem.center)[dims], problem.norm_order)
+		output = compute_output(problem.network, x)
+		softmax_output = softmax(output)
+		cross_entropy = -log(softmax_output[target])
+		return c * norm_val + cross_entropy
+	end
+	function gradient_function(x, c)
+		if (problem.norm_order == Inf)
+			norm_grad = zeros(length(x))
+			index_in_dims = argmax((abs.(x - problem.center))[dims])
+			norm_grad[dims[index_in_dims]] = sign((x - problem.center)[dims[index_in_dims]])
+		elseif(problem.objective == 1)
+			norm_grad = sign.(x - problem.center)
+		else
+			@assert false "Unsupported norm order for now"
+		end
+		output = compute_output(problem.network, x)
+		softmax_output = softmax(output)
+
+		network_grad = get_gradient(problem.network, x)
+		dsoftmax_dout = zeros(num_outputs)
+		for i = 1:num_outputs
+			if i == target
+				dsoftmax_dout[i] = softmax_output[target] * (1 - softmax_output[target])
+			else
+				dsoftmax_dout[i] = -softmax_output[target] * softmax_output[i]
+			end
+		end
+		cross_entropy_grad = -(1/softmax_output[target] * dsoftmax_dout' * network_grad)'
+		return c * norm_grad + cross_entropy_grad
+	end
+
+	# Perform a binary search over c looking for the largest value of c
+	# that leads to an adversarial example. if c = 0 then we should find a perturbation.
+	# if not, then it's unclear whether larger values of c will lead to one
+	x_0 =  problem.center # start in the middle of the region
+	lower_bound_c = 0.0
+	upper_bound_c = 100.0 # reasonable upper bound for c?
+	best_input = Vector{Float64}() # input associated with the lowest value of c
+	# If a value of c leads to an example this will be the lower bound on c
+	# if it doesn't then this is an upper bound on c
+	while (upper_bound_c - lower_bound_c >= solver.ϵ)
+		c = (upper_bound_c + lower_bound_c) / 2.0
+		println("Current c (LBFGS): ", c)
+		j = 0
+		result = Optim.optimize(x -> obj_function(x, c),
+								x -> gradient_function(x, c),
+								low(problem.input), high(problem.input), x_0,
+								Optim.Fminbox(Optim.LBFGS()),
+								Optim.Options(time_limit = time_limit); inplace=false)
+
+		opt_input = Optim.minimizer(result) # current optimal input
+		opt_output = compute_output(problem.network, opt_input)
+		# If it is an adversarial example, then update the lower bound and best input accordingly
+		if all(opt_output[target] .>= opt_output)
+			lower_bound_c = c
+			best_input = opt_input
+			# Return result early if you've achieved a norm ~0
+			if norm((best_input - problem.center)[dims], problem.norm_order) <= TOL[]
+				return MinPerturbationResult(:success, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
+			end
+		else
+			upper_bound_c = c
+		end
+	end
+	if (length(best_input) == 0)
+		@warn "Didn't find an adversarial example in LBFGS"
+		return MinPerturbationResult(:none_found, [Inf], Inf)
+	end
+	return MinPerturbationResult(:success, best_input, norm((best_input - problem.center)[dims], problem.norm_order))
 end
 
 function Base.show(io::IO, solver::LBFGS)

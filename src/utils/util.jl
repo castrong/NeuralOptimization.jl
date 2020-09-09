@@ -34,8 +34,7 @@ end
     code here: https://github.com/sisl/NNet/blob/master/utils/writeNNet.py.
 """
 function write_nnet(fname::String, network::Network)
-    println("Writting to: ", fname)
-    println("Size last layer: ", size(network.layers[end].weights))
+    println("Writing to: ", fname)
     open(fname, "w") do f
         #####################
         # First, we write the header lines:
@@ -127,93 +126,133 @@ function write_nnet(fname::String, network::Network)
 
 end
 
-"""
-    read_property_file(filename::String)
 
-Read a property file and return: (i) an input set, and (ii) an objective, and
-(iii) a boolean that is true if the objective should be maximized.
-Each line in the property file
+# Given something like 3x1-4x2+5x3+-3x4
+# parse it into [3, 4, 5, -3] and [1, 2, 3, 4]
+# the variables and coefficients involved.
+# string gives the string to parse, char gives the variable character.
+# assume no spaces
+function parse_sum(str, char)
+    # Turn any -- into plus, -+ into +-, "-" into "+-"
+    # after this, all terms are separated by a +
+    str = replace(str, "--"=>"+")
+    str = replace(str, "-+"=>"+-")
+    str = replace(str, "+-"=>"-") # remove any already existing +-s. For example x1 + -x2 --> x1 - x2
+    str = replace(str, "-"=>"+-") # turn any - into a +-. x1 - x2 --> x1 + -x2.
+    # Edge case if we start with a - we end up with +- at the very beginning
+    if (str[1] == '+')
+        str = str[2:end]
+    end
 
-For now we assume a hyper-rectangle input set.
-"""
-function read_property_file(filename::String, num_inputs::Int64; lower::Float64=0.0, upper::Float64=1.0)
+    terms = String.(split(str, "+"))
+    coeff_strs = [term[1:findfirst(string(char), term)[1] - 1] for term in terms]
+    coeff_strs = map(elem -> elem == "" ? "1.0" : elem, coeff_strs) # replace empty coefficients with 1
+    coeff_strs = map(elem -> elem == "-" ? "-1.0" : elem, coeff_strs) # replace - with -1.0
+    coefficients = parse.(Float64, coeff_strs)
+    vars = parse.(Int, [term[findfirst(string(char), term)[1] + 1:end] for term in terms])
+    return coefficients, vars
+end
 
-    # Keep track of the input lower and upper bounds that you accumulate
-    lower_bounds = lower .* ones(num_inputs)
-    upper_bounds = upper .* ones(num_inputs)
-    # Variables and coefficients for objective
-    variables::Vector{Int64} = []
-    coefficients::Vector{Float64} = []
+function property_file_to_problem(filename::String, network::Network, lower::Float64, upper::Float64)
+    num_inputs = size(network.layers[1].weights, 2)
+    num_outputs = length(network.layers[end].bias)
+
+    input_lower = lower * ones(num_inputs)
+    input_upper = upper * ones(num_inputs)
+    obj_coeffs = []
+    obj_vars = []
     maximize_objective = true
-
+    target = Inf
+    target_dir = "max"
+    center = Vector{Float64}()
+    dims = 1:num_inputs
+    output_obj = false
+    min_adv = false
+    output_halfspaces = Vector{HalfSpace}()
     lines = readlines(filename)
+
     for line in lines
-        line = replace(line, " "=>"") # Remove spaces
+        # Remove spaces from all lines
+        line = replace(line, " " => "")
+
+        # Objective line
         if occursin("Maximize", line) || occursin("Minimize", line)
-            println("Objective line: ", line)
+            output_obj = true
+            # Remove the maximize / minimize part
             maximize_objective = line[1:8] == "Maximize" ? true : false
-            expr_string = line[9:end]
-            done = false
-
-            while !done
-                plus_index = findfirst('+', expr_string)
-                done = plus_index == nothing # You're finished if you've reached the last term (no + left)
-
-                # If you're on the last term adjust the index appropriately
-                plus_index = plus_index == nothing ? length(expr_string)+1 : plus_index # handle if + is not found, the last term
-
-                # Isolate the current term and parse it
-                cur_term = expr_string[1:plus_index-1]
-                loc_y = findfirst('y', cur_term)
-                @assert loc_y != nothing "didn't find a y in this term"
-                coefficient_string = cur_term[1:loc_y-1]
-                if (coefficient_string == "-")
-                    coefficient = -1.0
-                elseif (coefficient_string == "")
-                    coefficient = 1.0
-                else
-                    coefficient = parse(Float64, coefficient_string)
-                end
-                variable = parse(Int64, cur_term[loc_y + 1:end]) + 1 # +1 in index since property file starts indexing from 0
-
-                # Add the coefficient and variable to the list
-                push!(coefficients, coefficient)
-                push!(variables, variable)
-
-                # Update your expr_string to cut off the first term
-                expr_string = expr_string[plus_index+1:end]
-            end
-        elseif occursin("x", line)
-            # Handle each type of comparator
-            if (occursin("<=", line))
-                comparator_index = findfirst("<=", line)
-                x_index = findfirst('x', line)
-                variable_index = parse(Int64, line[x_index+1:comparator_index[1]-1])  # go from after x to before comparator
-                scalar = parse(Float64, line[comparator_index[2]+1:end])
-                upper_bounds[variable_index + 1] = min(upper, scalar) # +1 in index since property file starts indexing from 0
-            elseif (occursin(">=", line))
-                comparator_index = findfirst(">=", line)
-                x_index = findfirst('x', line)
-                variable_index = parse(Int64, line[x_index+1:comparator_index[1]-1])  # go from after x to before comparator
-                scalar = parse(Float64, line[comparator_index[2]+1:end])
-                lower_bounds[variable_index + 1] = max(lower, scalar) # +1 in index since property file starts indexing from 0
-            elseif (occursin("==", line)) # is it == or =?
-                comparator_index = findfirst("==", line)
-                x_index = findfirst('x', line)
-                variable_index = parse(Int64, line[x_index+1:comparator_index[1]-1]) # go from after x to before comparator
-                scalar = parse(Float64, line[comparator_index[2]+1:end])
-                lower_bounds[variable_index + 1] = max(lower, scalar) # +1 in index since property file starts indexing from 0
-                upper_bounds[variable_index + 1] = min(upper, scalar)
+            line = line[length("Maximize")+1:end]
+            obj_coeffs, obj_vars = parse_sum(line, 'y')
+            obj_vars = obj_vars .+ 1 # switch to julia indexing from 1
+        elseif occursin("MinimumInputPerturbation", line)
+            min_adv = true
+            line = line[length("MinimumInputPerturbation")+1:end]
+            if (line == "all")
+                dims = collect(1:num_inputs)
             else
-                @assert false string("Unrecognized comparator: ", line)
+                dims = parse.(Int64, split(line, ","))
             end
+        elseif occursin("Center", line)
+            center = parse.(Float64, split(line[length("Center")+1:end], ","))
+        elseif occursin("Target", line)
+            line = line[length("Target")+1:end]
+            target_str, target_dir = split(line, ",")
+            target = parse(Int, target_str) + 1 # switch to julia indexing from 1
+        # Must be an input or an output constraint
         else
-            @assert false string("Unrecognized line in property file: ", line)
+            var_char = 'x'
+            if (occursin('y', line))
+                var_char = 'y'
+            end
+            comparator = occursin("<=", line) ? "<=" : ">="
+            comparator_start = findfirst(comparator, line)[1]
+            coeffs, vars = parse_sum(line[1:comparator_start-1], var_char)
+            vars = vars .+ 1 # switch to julia indexing from 1
+            scalar = parse(Float64, line[comparator_start+2:end])
+
+            if (var_char == 'x')
+                @assert (length(coeffs) == 1 && coeffs[1] == 1.0)  # make sure that we only have upper or lower bounds on the input
+                if (comparator == "<=")
+                    input_upper[vars[1]] = clamp(scalar, lower, upper)
+                else
+                    input_lower[vars[1]] = clamp(scalar, lower, upper)
+                end
+            else
+                expanded_coeffs = zeros(num_outputs)
+                expanded_coeffs[vars] = coeffs
+                sign_flip = comparator == ">=" ? -1.0 : 1.0 # sign to put into standard form of c^T x <= b
+                # Otherwise add a halfspace to your output set
+                push!(output_halfspaces, HalfSpace(sign_flip * expanded_coeffs, sign_flip * scalar))
+            end
         end
     end
 
-    # Return the hyperrectangle, the objective, and whether to maximize or minimize
-    return NeuralOptimization.Hyperrectangle(low=lower_bounds, high=upper_bounds), NeuralOptimization.LinearObjective(coefficients, variables), maximize_objective
+    # Return an output objective problem
+    @assert !(output_obj && min_adv) "Both output and min_adv objectives found in file"
+    println("lower: ", input_lower)
+    println("Upper: ", input_upper)
+    if (output_obj)
+        return OutputOptimizationProblem(
+                                            network=network,
+                                            input=Hyperrectangle(low=input_lower, high=input_upper),
+                                            objective=LinearObjective(obj_coeffs, obj_vars),
+                                            max=maximize_objective,
+                                            lower=lower,
+                                            upper=upper
+                                        )
+    elseif(min_adv)
+        return MinPerturbationProblem(
+                                        network=network,
+                                        center=center,
+                                        target=target,
+                                        target_dir=target_dir,
+                                        dims=dims,
+                                        input=Hyperrectangle(low=input_lower, high=input_upper),
+                                        output=HPolytope([output_halfspaces...]),
+                                        norm_order=Inf
+                                     )
+    else
+        @assert false "No objective found"
+    end
 end
 
 """

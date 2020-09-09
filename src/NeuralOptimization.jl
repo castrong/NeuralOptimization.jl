@@ -15,6 +15,7 @@ using NPZ # For reading and writing .npy files
 using PyCall # For Marabou, also to read .npz with certain data types unsupported by NPZ
 using BenchmarkTools # For our benchmark timing
 using Requires
+using LinearAlgebra
 
 # # Python libraries that we'll need for Marabou
 py"""
@@ -45,7 +46,6 @@ while true
    end
 end
 
-using LinearAlgebra
 import LazySets: dim, HalfSpace # necessary to avoid conflict with Polyhedra
 
 # For optimization methods:
@@ -119,5 +119,9 @@ export Sherlock
 export Marabou
 export MarabouBinarySearch
 export MIPVerify
+
+const TOL = Ref(sqrt(eps()))
+set_tolerance(x::Real) = (TOL[] = x)
+export set_tolerance
 
 end
