@@ -147,6 +147,10 @@ function init_marabou_binary_function()
 			options._divideStrategy = MarabouCore.DivideStrategy.EarliestReLU
 		elif (divide_strategy == "ReLUViolation"):
 			options._divideStrategy = MarabouCore.DivideStrategy.ReLUViolation
+		elif (divide_strategy == "LargestInterval"):
+			options._divideStrategy = MarabouCore.DivideStrategy.LargestInterval
+		elif (divide_strategy == "Auto"):
+			options._divideStrategy = MarabouCore.DivideStrategy.Auto
 
 		start_time = time.time()
 
