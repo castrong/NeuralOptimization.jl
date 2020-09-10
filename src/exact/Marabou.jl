@@ -258,7 +258,6 @@ function init_python_functions()
 		network = Marabou.read_nnet(network_file, normalize=False)
 		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
 		#network.use_nlr = use_sbt
-
 		input_vars = network.inputVars.flatten()
 		num_inputs = len(input_vars)
 		output_vars = network.outputVars.flatten()
@@ -267,7 +266,6 @@ function init_python_functions()
 		# Encode the input and output constraints
 		network = encode_polytope(A_in, b_in, input_vars, network)
 		network = encode_polytope(A_out, b_out, output_vars, network)
-
 		# Setup the objective. Introduce epsilon
 		# and give it an upper and lower bound
 		# we can only maximize, so introduce a negative radius to maximize
@@ -336,19 +334,16 @@ function init_python_functions()
 			status = "success"
 			input_vals = [vals[i] for i in range(0, num_inputs)]
 			deltas = [input_vals[i] - center[i] for i in range(len(input_vals))]
-			objective_val = max(deltas) # l_inf norm
+			objective_value = max(deltas) # l_inf norm
 			# Have to read the network again because of deallocation issues after the first call
 			network = Marabou.read_nnet(network_file, normalize=False)
 			marabou_optimizer_result = network.evaluateWithMarabou([input_vals])[0]
 			print("Deltas from nominal: ", deltas)
 			print("Optimal output: ", marabou_optimizer_result)
-			print("Optimal Objective: ", min(objective_val))
+			print("Optimal Objective: ", objective_value)
 
 			marabouOptimizerResult = network.evaluateWithMarabou([input_val])
-			objective_value = 0
-			for index, coefficient in enumerate(weight_vector):
-				objective_value += coefficient * marabouOptimizerResult[0][index] # odd indexing
-			print("Objective value: ", objective_value)
+			print("Marabou opt result: ", marabouOptimizerResult)
 
 		return (status, input_val, objective_value)
 	"""
