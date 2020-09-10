@@ -277,7 +277,6 @@ if haskey(config, "mnist")
         end
     end
     if(haskey(config["mnist"], "min_input"))
-        println("Making min input for mnist")
         mnist_input_config = config["mnist"]["min_input"]
         architectures = split(mnist_input_config["architectures"], " ")
         number_of_images = parse.(Int, split(mnist_input_config["number_of_images"], " "))

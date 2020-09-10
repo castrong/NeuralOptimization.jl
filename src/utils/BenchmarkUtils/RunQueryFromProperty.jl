@@ -11,7 +11,7 @@
 
     To run a quick test:
     module test
-           ARGS = ["--environment_path", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/", "--optimizer", "VanillaMIP_optimizer=Gurobi.Optimizer_threads=1_m=1.0e6", "--network_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Networks/ACASXU_experimental_v2a_1_1.nnet", "--property_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Properties/acas_property_optimization_4.txt", "--result_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Results/FGSM.ACASXU_experimental_v2a_1_2.acas_property_optimization_4.txt"]
+           ARGS = ["--environment_path", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/", "--optimizer", "Marabou_sbt=true_dividestrategy=EarliestReLU", "--network_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Networks/mnist10x20.nnet", "--property_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Properties/mnist_property_mininput_MNISTlabel_2_index_1__3.txt", "--result_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Results/Marabou_sbt=true_dividestrategy=EarliestReLU.mnist10x20.mnist_property_mininput_MNISTlabel_2_index_1__3.txt"]
            include("/Users/castrong/Desktop/Research/NeuralOptimization.jl/src/utils/BenchmarkUtils/RunQueryFromProperty.jl")
     end
 
@@ -76,8 +76,11 @@ if !isfile(result_file)
 	simple_objective = NeuralOptimization.LinearObjective([1.0], [1])
 	simple_input = NeuralOptimization.Hyperrectangle([1.0], [1.0])
 	simple_problem = NeuralOptimization.OutputOptimizationProblem(network=simple_nnet, input=simple_input, objective=simple_objective, max=true, lower=-Inf,upper=Inf)
-	time_temp = @elapsed result = NeuralOptimization.optimize(optimizer, simple_problem, 20)
-	println("Simple problem ran in: ", time_temp)
+	simple_input_problem = NeuralOptimization.MinPerturbationProblem(network=simple_nnet, input=simple_input, center = [0.5], target = 1, dims=[1], output = NeuralOptimization.HPolytope([NeuralOptimization.HalfSpace([1.0], 5.0)]), norm_order=Inf)
+	time_simple_output = @elapsed result = NeuralOptimization.optimize(optimizer, simple_problem, 20)
+	time_simple_input = @elapsed result = NeuralOptimization.optimize(optimizer, simple_input_problem, 20)
+	println("Simple output problem ran in: ", time_simple_output)
+	println("Simple input problem ran in: ", time_simple_input)
 
 	# A problem needs a network, input set, objective and whether to maximize or minimize.
 	# it also takes in the lower and upper bounds on the network input variables which describe
