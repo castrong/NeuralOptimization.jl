@@ -156,8 +156,8 @@ if haskey(config, "acas")
     end
     if (haskey(config["acas"], "min_input"))
         acas_input_config = config["acas"]["min_input"]
-        properties = split(acas_input_config["properties"], " ")
-        number_of_networks = parse.(Int, split(acas_input_config["number_of_networks"], " "))
+        properties = split(string(acas_input_config["properties"]), " ")
+        number_of_networks = parse.(Int, split(string(acas_input_config["number_of_networks"]), " "))
         dims = split(acas_input_config["dims"], " ")
         targets = parse.(Int, split(acas_input_config["target"], " "))
         target_dirs = split(acas_input_config["target_dir"], " ")
