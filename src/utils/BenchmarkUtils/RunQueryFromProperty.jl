@@ -82,11 +82,15 @@ if !isfile(result_file)
 	simple_problem = NeuralOptimization.OutputOptimizationProblem(network=simple_nnet, input=simple_input, objective=simple_objective, max=true, lower=-Inf,upper=Inf)
 	simple_input_problem = NeuralOptimization.MinPerturbationProblem(network=simple_nnet, input=simple_input, center = [0.5], target=1, dims=[1], output = NeuralOptimization.HPolytope([NeuralOptimization.HalfSpace([1.0], 5.0)]), norm_order=Inf)
 	time_simple_output = @elapsed result_output = NeuralOptimization.optimize(optimizer, simple_problem, 20)
-	time_simple_input = @elapsed result_input = NeuralOptimization.optimize(optimizer, simple_input_problem, 20)
 	println("Simple output problem ran in: ", time_simple_output)
-	println("Simple input problem ran in: ", time_simple_input)
 	println("Simple output problem result: ", result_output)
-	println("Simple min problem result: ", result_input)
+
+	if (solver isa Union{Marabou, LBFGS})
+		println("Running simple input problem")
+		time_simple_input = @elapsed result_input = NeuralOptimization.optimize(optimizer, simple_input_problem, 20)
+		println("Simple input problem ran in: ", time_simple_input)
+		println("Simple min problem result: ", result_input)
+	end
 
 	# A problem needs a network, input set, objective and whether to maximize or minimize.
 	# it also takes in the lower and upper bounds on the network input variables which describe
