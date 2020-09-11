@@ -84,5 +84,4 @@ open(output_file, "w") do f
           string(result.objective_value), ",",
           string(elapsed_time), ",",
           string(optimal_output)[2:end-1], "\n")
-   close(f)
 end

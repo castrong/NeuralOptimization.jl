@@ -76,21 +76,19 @@ function optimize(solver::Marabou, problem::MinPerturbationProblem, time_limit::
 	# Input and output sets
 	A_in, b_in = tosimplehrep(problem.input)
 	num_outputs = length(problem.network.layers[end].bias)
-	println("Num outputs: ", num_outputs)
 	# If it provides a target, convert that to an output set
-	if (problem.target != Inf)
+	if (problem.target != nothing)
 		# A matrix with each row corresponding to the target >= other index
 		A_out = Matrix{Float64}(-I, num_outputs, num_outputs)
 		A_out[:, problem.target] .= 1.0
 		A_out = A_out[1:end .!= problem.target, :] # remove the row which would try to do target >= target
 		b_out = zeros(num_outputs - 1)
 	else
-		A_out, b_out = tosimplehrep(output_set)
+		A_out, b_out = tosimplehrep(problem.output)
 	end
 
 	# Write the network then run the solver
 	network_file = string(tempname(), ".nnet")
-	println(network_file)
 	write_nnet(network_file, problem.network)
 	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims .- 1, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit)
 	return MinPerturbationResult(Symbol(status), input_val, obj_val)
@@ -119,20 +117,21 @@ function init_python_functions()
 					if (A[row_index, col_index] != 1 and A[row_index, col_index] != -1):
 						all_weights_mag_1 = False
 
-
 			if (all_weights_mag_1 and num_weights == 1):
 				if (mag_weight == 1):
-					network.setUpperBound(variables[index], min(b[row_index], network.upperBounds[variables[index]]))
+					if variables[index] in network.upperBounds.keys():
+						network.setUpperBound(variables[index], min(b[row_index], network.upperBounds[variables[index]]))
+					else:
+						network.setUpperBound(variables[index], b[row_index])
 				else:
-					network.setLowerBound(variables[index], max(-b[row_index], network.lowerBounds[variables[index]]))
-
+					if variables[index] in network.lowerBounds.keys():
+						network.setLowerBound(variables[index], max(-b[row_index], network.lowerBounds[variables[index]]))
+					else:
+						network.setLowerBound(variables[index], -b[row_index])
 			# If not, then this row corresponds to some other linear equation - so we'll encode that
 			else:
-				print("Constraint not a lower / upper bound")
 				for col_index in range(A.shape[1]):
 					if (A[row_index, col_index] != 0):
-						print('Wasnt zero', (row_index, col_index))
-						print('val:', (A[row_index, col_index]))
 						constraint_equation.addAddend(A[row_index, col_index], variables[col_index])
 
 				network.addEquation(constraint_equation)
@@ -155,22 +154,17 @@ function init_python_functions()
 
 		# Add bounds on each node from bound list
 		if (len(lower_bounds) > 0):
-			print("In here")
 			for layer_index in range(len(lower_bounds)):
-				print("Layer index: ", layer_index)
 				cur_lower_bounds = lower_bounds[layer_index]
 				cur_upper_bounds = upper_bounds[layer_index]
-				print("Upper: ", cur_upper_bounds)
 				for bound_index in range(len(cur_lower_bounds)):
 					cur_upper_bound = cur_upper_bounds[bound_index]
 					cur_lower_bound = cur_lower_bounds[bound_index]
 					# Set an upper and lower bound on the backward facing variable
 					# f = relu(b)
-					print("Indices: ", (layer_index, bound_index))
 					# layer index + 1 since we don't have bounds on the input layer
 					# we also wouldn't have a backward facing variable there
 					backwardsFacingVariable = network.nodeTo_b(layer_index+1, bound_index)
-					print("Bound: ", (cur_lower_bound, cur_upper_bound))
 					network.setLowerBound(backwardsFacingVariable, cur_lower_bound)
 					network.setUpperBound(backwardsFacingVariable, cur_upper_bound)
 
@@ -179,7 +173,6 @@ function init_python_functions()
 						print("Triangle relaxation on layer: ", layer_index + 1)
 						# Apply the triangle relaxation to nodes that are still split phase
 						if (cur_upper_bound <= 0):
-
 							print("Node fixed inactive")
 						elif (cur_lower_bound > 0):
 							print("Node fixed active")
@@ -193,7 +186,6 @@ function init_python_functions()
 							triangleEquation.addAddend(-1.0, forwardsFacingVariable)
 							triangleEquation.setScalar(cur_lower_bound * slope)
 							network.addEquation(triangleEquation)
-
 
 		# Set the options
 		options = MarabouCore.Options()
@@ -304,7 +296,7 @@ function init_python_functions()
 		# Set the options
 		options = MarabouCore.Options()
 		options._optimize = True
-		options._verbosity = 0
+		options._verbosity = 1
 		options._timeoutInSeconds = timeout
 		# Parse the divide strategy from a string to its corresponding enum
 		if (divide_strategy == "EarliestReLU"):
@@ -322,30 +314,28 @@ function init_python_functions()
 
 		# No solution
 		status = ""
-		input_val = [float("inf")]
+		input_vals = [float("inf")]
 		objective_value = float("inf")
-
 
 		if (state.hasTimedOut()):
 			status = "timeout"
 		elif (len(vals) == 0):
+			print("Len vals 0")
 			status = "infeasible"
 		else:
+			print("Success! vals: ", vals)
 			status = "success"
 			input_vals = [vals[i] for i in range(0, num_inputs)]
 			deltas = [input_vals[i] - center[i] for i in range(len(input_vals))]
 			objective_value = max(deltas) # l_inf norm
 			# Have to read the network again because of deallocation issues after the first call
 			network = Marabou.read_nnet(network_file, normalize=False)
-			marabou_optimizer_result = network.evaluateWithMarabou([input_vals])[0]
+			marabou_optimizer_result = network.evaluateWithMarabou([input_vals])
 			print("Deltas from nominal: ", deltas)
 			print("Optimal output: ", marabou_optimizer_result)
 			print("Optimal Objective: ", objective_value)
 
-			marabouOptimizerResult = network.evaluateWithMarabou([input_val])
-			print("Marabou opt result: ", marabouOptimizerResult)
-
-		return (status, input_val, objective_value)
+		return (status, input_vals, objective_value)
 	"""
 end
 

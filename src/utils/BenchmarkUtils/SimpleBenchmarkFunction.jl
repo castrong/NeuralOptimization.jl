@@ -59,7 +59,6 @@ function Benchmark_Category(optimizers, network_files, objectives, input_files, 
                               string(result.status), ",",
                               string(result.objective_value), ",",
                               string(elapsed_time), "\n")
-                        close(f)
                     end
                 end
             end
