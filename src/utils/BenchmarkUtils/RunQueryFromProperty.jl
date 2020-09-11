@@ -68,7 +68,6 @@ timeout = parsed_args["timeout"]
 
 # If the result file is already there do nothing
 if !isfile(result_file)
-
 	# Activate the environment and include NeuralOptiimization.jl
 	Pkg.activate(environment_path)
 	include(joinpath(environment_path, "src/NeuralOptimization.jl"))
@@ -86,7 +85,8 @@ if !isfile(result_file)
 	time_simple_input = @elapsed result_input = NeuralOptimization.optimize(optimizer, simple_input_problem, 20)
 	println("Simple output problem ran in: ", time_simple_output)
 	println("Simple input problem ran in: ", time_simple_input)
-	println("Simple min problem output: ", result_input)
+	println("Simple output problem result: ", result_output)
+	println("Simple min problem result: ", result_input)
 
 	# A problem needs a network, input set, objective and whether to maximize or minimize.
 	# it also takes in the lower and upper bounds on the network input variables which describe
