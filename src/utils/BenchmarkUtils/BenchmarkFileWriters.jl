@@ -44,7 +44,6 @@ function write_benchmark_file(class_string, network_files, input_files, objectiv
                           objective_coefficients_string, ",",
                           maximize ? "maximize" : "minimize", "\n"
                           )
-                    close(f)
                 end
             end
         end
@@ -69,7 +68,6 @@ function write_optimizer_file(optimizer_names, optimizers, output_file, append_o
         first_loop = false
         open(output_file, file_mode) do f
             write(f, optimizer_name, ",", string(optimizer), "\n")
-            close(f)
         end
     end
 end

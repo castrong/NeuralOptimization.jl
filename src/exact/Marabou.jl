@@ -89,7 +89,6 @@ function optimize(solver::Marabou, problem::MinPerturbationProblem, time_limit::
 
 	# Write the network then run the solver
 	network_file = string(tempname(), ".nnet")
-	println(network_file)
 	write_nnet(network_file, problem.network)
 	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims .- 1, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit)
 	return MinPerturbationResult(Symbol(status), input_val, obj_val)
@@ -101,7 +100,6 @@ function init_python_functions()
 	def encode_polytope(A, b, variables, network):
 		# Add input constraints
 		for row_index in range(A.shape[0]):
-			print("Row: ", row_index)
 			constraint_equation = MarabouUtils.Equation(EquationType=MarabouCore.Equation.LE)
 			constraint_equation.setScalar(b[row_index])
 			# First check if this row corresponds to an upper or lower bound on a variable
@@ -132,11 +130,8 @@ function init_python_functions()
 						network.setLowerBound(variables[index], -b[row_index])
 			# If not, then this row corresponds to some other linear equation - so we'll encode that
 			else:
-				print("Constraint not a lower / upper bound")
 				for col_index in range(A.shape[1]):
 					if (A[row_index, col_index] != 0):
-						print('Wasnt zero', (row_index, col_index))
-						print('val:', (A[row_index, col_index]))
 						constraint_equation.addAddend(A[row_index, col_index], variables[col_index])
 
 				network.addEquation(constraint_equation)
@@ -167,11 +162,9 @@ function init_python_functions()
 					cur_lower_bound = cur_lower_bounds[bound_index]
 					# Set an upper and lower bound on the backward facing variable
 					# f = relu(b)
-					print("Indices: ", (layer_index, bound_index))
 					# layer index + 1 since we don't have bounds on the input layer
 					# we also wouldn't have a backward facing variable there
 					backwardsFacingVariable = network.nodeTo_b(layer_index+1, bound_index)
-					print("Bound: ", (cur_lower_bound, cur_upper_bound))
 					network.setLowerBound(backwardsFacingVariable, cur_lower_bound)
 					network.setUpperBound(backwardsFacingVariable, cur_upper_bound)
 
@@ -180,7 +173,6 @@ function init_python_functions()
 						print("Triangle relaxation on layer: ", layer_index + 1)
 						# Apply the triangle relaxation to nodes that are still split phase
 						if (cur_upper_bound <= 0):
-
 							print("Node fixed inactive")
 						elif (cur_lower_bound > 0):
 							print("Node fixed active")
@@ -194,7 +186,6 @@ function init_python_functions()
 							triangleEquation.addAddend(-1.0, forwardsFacingVariable)
 							triangleEquation.setScalar(cur_lower_bound * slope)
 							network.addEquation(triangleEquation)
-
 
 		# Set the options
 		options = MarabouCore.Options()
@@ -256,7 +247,6 @@ function init_python_functions()
 		return (status, input_val, objective_value)
 
 	def min_perturbation_python(center, A_in, b_in, A_out, b_out, dims, norm_order, network_file, use_sbt, divide_strategy, timeout):
-		print("Starting min perturbation")
 		network = Marabou.read_nnet(network_file, normalize=False)
 		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
 		#network.use_nlr = use_sbt

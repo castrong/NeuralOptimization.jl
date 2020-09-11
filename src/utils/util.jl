@@ -119,11 +119,7 @@ function write_nnet(fname::String, network::Network)
             end
 
         end
-
-        close(f)
     end
-
-
 end
 
 
