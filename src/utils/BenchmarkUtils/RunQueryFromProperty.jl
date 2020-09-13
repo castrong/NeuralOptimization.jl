@@ -85,7 +85,7 @@ if !isfile(result_file)
 	println("Simple output problem ran in: ", time_simple_output)
 	println("Simple output problem result: ", result_output)
 
-	if (solver isa Union{NeuralOptimization.Marabou, NeuralOptimization.LBFGS})
+	if (optimizer isa Union{NeuralOptimization.Marabou, NeuralOptimization.LBFGS})
 		println("Running simple input problem")
 		time_simple_input = @elapsed result_input = NeuralOptimization.optimize(optimizer, simple_input_problem, 20)
 		println("Simple input problem ran in: ", time_simple_input)
