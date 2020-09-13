@@ -185,7 +185,7 @@ function property_file_to_problem(filename::String, network::Network, lower::Flo
             if (line == "all")
                 dims = collect(1:num_inputs)
             else
-                dims = parse.(Int64, split(line, ","))
+                dims = parse.(Int64, split(line, ",")) .+ 1 # switch to julia indexing from 1
             end
         elseif occursin("Center", line)
             center = parse.(Float64, split(line[length("Center")+1:end], ","))
