@@ -88,11 +88,6 @@ function optimize(solver::Marabou, problem::MinPerturbationProblem, time_limit::
 		A_out, b_out = tosimplehrep(problem.output)
 	end
 
-	println("A_out: ", A_out)
-	println("b_out: ", b_out)
-	println("A_in: ", A_in)
-	println("b_in: ", b_in)
-
 	# Write the network then run the solver
 	network_file = string(tempname(), ".nnet")
 	write_nnet(network_file, problem.network)
