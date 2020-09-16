@@ -78,9 +78,10 @@ function optimize(solver::Marabou, problem::MinPerturbationProblem, time_limit::
 	num_outputs = length(problem.network.layers[end].bias)
 	# If it provides a target, convert that to an output set
 	if (problem.target != nothing)
+		sign = problem.target_dir == "max" ? 1.0 : -1.0
 		# A matrix with each row corresponding to the target >= other index
-		A_out = Matrix{Float64}(-I, num_outputs, num_outputs)
-		A_out[:, problem.target] .= 1.0
+		A_out = Matrix{Float64}(sign * I, num_outputs, num_outputs)
+		A_out[:, problem.target] .= sign * -1.0
 		A_out = A_out[1:end .!= problem.target, :] # remove the row which would try to do target >= target
 		b_out = zeros(num_outputs - 1)
 	else
@@ -326,12 +327,14 @@ function init_python_functions()
 			print("Success! vals: ", vals)
 			status = "success"
 			input_vals = [vals[i] for i in range(0, num_inputs)]
-			deltas = [input_vals[i] - center[i] for i in range(len(input_vals))]
-			objective_value = max(deltas) # l_inf norm
+			deltas = [abs(input_vals[i] - center[i]) for i in range(len(input_vals))]
+			obj_deltas = [abs(input_vals[i] - center[i]) for i in dims]
+			objective_value = max(obj_deltas) # l_inf norm only looking at dims
 			# Have to read the network again because of deallocation issues after the first call
 			network = Marabou.read_nnet(network_file, normalize=False)
 			marabou_optimizer_result = network.evaluateWithMarabou([input_vals])
 			print("Deltas from nominal: ", deltas)
+			print("Objective Deltas: ", obj_deltas)
 			print("Optimal output: ", marabou_optimizer_result)
 			print("Optimal Objective: ", objective_value)
 
