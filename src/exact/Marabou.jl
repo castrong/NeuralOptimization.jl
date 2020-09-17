@@ -19,6 +19,7 @@ Sound and complete
 	usesbt::Bool = false
 	dividestrategy::String = "ReLUViolation"
 	triangle_relaxation::Bool = false
+	perReLUTimeout::Float64 = 1
 end
 
 function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limit::Int = 30)
@@ -50,7 +51,7 @@ function optimize(solver::Marabou, problem::OutputOptimizationProblem, time_limi
 	network_file = string(tempname(), ".nnet")
 	println(network_file)
 	write_nnet(network_file, augmented_problem.network)
-	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, augmented_problem.lower, augmented_problem.upper, augmented_problem.lower_bounds, augmented_problem.upper_bounds, solver.triangle_relaxation, time_limit)
+	(status, input_val, obj_val) = py"""marabou_python"""(A, b, weight_vector, network_file, solver.usesbt, solver.dividestrategy, augmented_problem.lower, augmented_problem.upper, augmented_problem.lower_bounds, augmented_problem.upper_bounds, solver.triangle_relaxation, time_limit, solver.perReLUTimeout )
 
 	# Turn the string status into a symbol to return
 	if (status == "success")
@@ -91,7 +92,7 @@ function optimize(solver::Marabou, problem::MinPerturbationProblem, time_limit::
 	# Write the network then run the solver
 	network_file = string(tempname(), ".nnet")
 	write_nnet(network_file, problem.network)
-	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims .- 1, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit)
+	(status, input_val, obj_val) = py"""min_perturbation_python"""(problem.center, A_in, b_in, A_out, b_out, problem.dims .- 1, problem.norm_order, network_file, solver.usesbt, solver.dividestrategy, time_limit, solver.perReLUTimeout)
 	return MinPerturbationResult(Symbol(status), input_val, obj_val)
 end
 
@@ -138,7 +139,7 @@ function init_python_functions()
 				network.addEquation(constraint_equation)
 		return network
 
-	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, lower_bounds, upper_bounds, triangle_relaxation, timeout):
+	def marabou_python(A, b, weight_vector, network_file, use_sbt, divide_strategy, lower, upper, lower_bounds, upper_bounds, triangle_relaxation, timeout, perReLUTimeout):
 		# Load in the network
 		network = Marabou.read_nnet(network_file, normalize=False)
 		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
@@ -193,6 +194,7 @@ function init_python_functions()
 		options._optimize = True
 		options._verbosity = 1
 		options._timeoutInSeconds = timeout
+		options._perReLUTimeout = perReLUTimeout
 		# Parse the divide strategy from a string to its corresponding enum
 		if (divide_strategy == "EarliestReLU"):
 			options._divideStrategy = MarabouCore.DivideStrategy.EarliestReLU
@@ -247,7 +249,7 @@ function init_python_functions()
 
 		return (status, input_val, objective_value)
 
-	def min_perturbation_python(center, A_in, b_in, A_out, b_out, dims, norm_order, network_file, use_sbt, divide_strategy, timeout):
+	def min_perturbation_python(center, A_in, b_in, A_out, b_out, dims, norm_order, network_file, use_sbt, divide_strategy, timeout, perReLUTimeout):
 		network = Marabou.read_nnet(network_file, normalize=False)
 		# TODO: FIGURE OUT HOW TO TURN ON AND OFF SBT
 		#network.use_nlr = use_sbt
@@ -299,6 +301,7 @@ function init_python_functions()
 		options._optimize = True
 		options._verbosity = 1
 		options._timeoutInSeconds = timeout
+		options._perReLUTimeout = perReLUTimeout
 		# Parse the divide strategy from a string to its corresponding enum
 		if (divide_strategy == "EarliestReLU"):
 			options._divideStrategy = MarabouCore.DivideStrategy.EarliestReLU
@@ -343,5 +346,5 @@ function init_python_functions()
 end
 
 function Base.show(io::IO, solver::Marabou)
-	print(io, string("Marabou_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy))
+	print(io, string("Marabou_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy, "_", "perReLUTimeout=", solver.perReLUTimeout))
 end

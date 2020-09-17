@@ -78,8 +78,9 @@ end
 if haskey(config, "marabou")
     usesbts = parse.(Bool, split(string(config["marabou"]["usesbt"]), ","))
     dividestrategies = split(config["marabou"]["dividestrategy"], ",")
-    for (usesbt, dividestrategy) in zip(usesbts, dividestrategies)
-        push!(solvers, NeuralOptimization.Marabou(usesbt=usesbt, dividestrategy=dividestrategy))
+    perReLUTimeouts = parse.(Float64, split(config["marabou"]["perReLUTimeout"], ","))
+    for (usesbt, dividestrategy, perReLUTimeout) in zip(usesbts, dividestrategies, perReLUTimeouts)
+        push!(solvers, NeuralOptimization.Marabou(usesbt=usesbt, dividestrategy=dividestrategy, perReLUTimeout=perReLUTimeout))
     end
 end
 
