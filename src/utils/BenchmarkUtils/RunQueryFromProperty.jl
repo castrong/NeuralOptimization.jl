@@ -16,7 +16,7 @@
     end
 
 	module test
-           ARGS = ["--environment_path", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/", "--optimizer", "Marabou_sbt=true_dividestrategy=EarliestReLU", "--network_file", "/Users/castrong/Downloads/full_benchmarks/Networks/ACASXU_experimental_v2a_1_5.nnet", "--property_file", "/Users/castrong/Downloads/full_benchmarks/Properties/acas_property_optimization_4.txt", "--result_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Results/debug_result.txt"]
+           ARGS = ["--environment_path", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/", "--optimizer", "MarabouBinarySearch_sbt=true_dividestrategy=ReLUViolation", "--network_file", "/Users/castrong/Downloads/mnist10x10.nnet", "--property_file", "/Users/castrong/Downloads/mnist_property_mininput_MNISTlabel_3_index_2__2.txt", "--result_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Results/binary_mininput.txt"]
            include("/Users/castrong/Desktop/Research/NeuralOptimization.jl/src/utils/BenchmarkUtils/RunQueryFromProperty.jl")
     end
 
@@ -85,12 +85,17 @@ if !isfile(result_file)
 	println("Simple output problem ran in: ", time_simple_output)
 	println("Simple output problem result: ", result_output)
 
-	if (optimizer isa Union{NeuralOptimization.Marabou, NeuralOptimization.LBFGS})
+	if (optimizer isa Union{NeuralOptimization.Marabou, NeuralOptimization.LBFGS, NeuralOptimization.MarabouBinarySearch})
 		println("Running simple input problem")
 		time_simple_input = @elapsed result_input = NeuralOptimization.optimize(optimizer, simple_input_problem, 20)
+
+		# Repeat print the output so you have them together here
+		println("Simple output problem ran in: ", time_simple_output)
+		println("Simple output problem result: ", result_output)
 		println("Simple input problem ran in: ", time_simple_input)
 		println("Simple min problem result: ", result_input)
 	end
+
 
 	# A problem needs a network, input set, objective and whether to maximize or minimize.
 	# it also takes in the lower and upper bounds on the network input variables which describe

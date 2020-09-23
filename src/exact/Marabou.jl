@@ -324,7 +324,6 @@ function init_python_functions()
 			print("Len vals 0")
 			status = "infeasible"
 		else:
-			print("Success! vals: ", vals)
 			status = "success"
 			input_vals = [vals[i] for i in range(0, num_inputs)]
 			deltas = [abs(input_vals[i] - center[i]) for i in range(len(input_vals))]
