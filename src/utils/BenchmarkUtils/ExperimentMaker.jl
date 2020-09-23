@@ -87,8 +87,9 @@ end
 if haskey(config, "marabou_binary_search")
     usesbts = parse.(Bool, split(string(config["marabou_binary_search"]["usesbt"]), ","))
     dividestrategies = split(config["marabou_binary_search"]["dividestrategy"], ",")
-    for (usesbt, dividestrategy) in zip(usesbts, dividestrategies)
-        push!(solvers, NeuralOptimization.MarabouBinarySearch(usesbt=usesbt, dividestrategy=dividestrategy))
+    perReLUTimeouts = parse.(Float64, split(config["marabou_binary_search"]["perReLUTimeout"], ","))
+    for (usesbt, dividestrategy, perReLUTimeout) in zip(usesbts, dividestrategies, perReLUTimeouts)
+        push!(solvers, NeuralOptimization.MarabouBinarySearch(usesbt=usesbt, dividestrategy=dividestrategy, perReLUTimeout=perReLUTimeout))
     end
 end
 

@@ -19,7 +19,8 @@ Sound and complete
 @with_kw struct MarabouBinarySearch
     optimizer = GLPK.Optimizer # To find a feasible original point
     usesbt = false
-	dividestrategy = "ReLUViolation"
+    dividestrategy = "ReLUViolation"
+    perReLUTimeout::Float64 = 1
 end
 
 function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProblem, time_limit::Int = 1200)
@@ -51,7 +52,7 @@ function optimize(solver::MarabouBinarySearch, problem::OutputOptimizationProble
 	# Write the network then run the solver
     network_file = string(tempname(), ".nnet")
 	write_nnet(network_file, augmented_network)
-	(status, input_val, obj_val) = py"""marabou_binarysearch_python"""(A, b, feasible_val, network_file, solver.usesbt, solver.dividestrategy, problem.lower, problem.upper, time_limit)
+	(status, input_val, obj_val) = py"""marabou_binarysearch_python"""(A, b, feasible_val, network_file, solver.usesbt, solver.dividestrategy, problem.lower, problem.upper, time_limit, solver.perReLUTimeout)
 
 	# Turn the string status into a symbol to return
     if (status == "success")
@@ -132,7 +133,7 @@ function init_marabou_binary_function()
 
 		return network, inputVars, numInputs
 
-	def marabou_binarysearch_python(A, b, lower_bound, network_file, use_sbt, divide_strategy, lower, upper, timeout):
+	def marabou_binarysearch_python(A, b, lower_bound, network_file, use_sbt, divide_strategy, lower, upper, timeout, perReLUTimeout):
 		# Load in the network
 		network, inputVars, numInputs = setup_network(network_file, A, b, use_sbt, lower, upper)
 
@@ -142,6 +143,7 @@ function init_marabou_binary_function()
 		options._verbosity = 0
 		options._timeoutInSeconds = timeout
 		options._dnc = False
+		options._perReLUTimeout = perReLUTimeout
 		# Parse the divide strategy from a string to its corresponding enum
 		if (divide_strategy == "EarliestReLU"):
 			options._divideStrategy = MarabouCore.DivideStrategy.EarliestReLU
@@ -227,5 +229,5 @@ function init_marabou_binary_function()
 end
 
 function Base.show(io::IO, solver::MarabouBinarySearch)
-	print(io, string("MarabouBinarySearch_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy))
+	print(io, string("MarabouBinarySearch_", "sbt=", string(solver.usesbt), "_", "dividestrategy=", solver.dividestrategy, "_", "perReLUTimeout=", solver.perReLUTimeout))
 end

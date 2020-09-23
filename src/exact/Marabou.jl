@@ -235,6 +235,9 @@ function init_python_functions()
 		objective_value = -1.0
 		if (state.hasTimedOut()):
 			status = "timeout"
+		elif (len(vals) == 0):
+			print("Len vals 0")
+			status = "infeasible"
 		else:
 			status = "success"
 			input_val = [vals[i] for i in range(0, numInputs)]

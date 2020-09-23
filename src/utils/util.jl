@@ -330,7 +330,8 @@ function parse_optimizer(optimizer_string)
         sbt_string = split(chunks[2], "=")[2]
         sbt = parse(Bool, sbt_string)
         dividestrategy = split(chunks[3], "=")[2]
-        return NeuralOptimization.MarabouBinarySearch(usesbt=sbt, dividestrategy=dividestrategy)
+	perReLUTimeout = parse(Float64, split(chunks[4], "=")[2])
+        return NeuralOptimization.MarabouBinarySearch(usesbt=sbt, dividestrategy=dividestrategy,perReLUTimeout=perReLUTimeout)
     elseif (optimizer_type == "Sherlock")
         backend_optimizer_string = split(chunks[2], "=")[2]
         threads_string = split(chunks[3], "=")[2]

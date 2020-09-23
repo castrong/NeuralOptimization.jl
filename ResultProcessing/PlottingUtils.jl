@@ -5,12 +5,12 @@ using Query
 
 # For approximate solvers, make a visualization of
 # how their optima differ
-function make_val_comparison(filename, output_path, column_markers, row_markers, row_disqualifiers, categories, legend_entries, styles; file_start="", timeout=3600)
+function make_val_comparison(filename, output_path, column_markers, row_markers, row_disqualifiers, categories, legend_entries, styles; file_start="", timeout=7200)
 
 end
 
 
-function make_pairwise_comparisons(filename, output_path, column_markers, row_markers, row_disqualifiers, categories, legend_entries, styles; file_start="", timeout=3600)
+function make_pairwise_comparisons(filename, output_path, column_markers, row_markers, row_disqualifiers, categories, legend_entries, styles; file_start="", timeout=7200)
     full_style = join([string(category, "={", style, "}, ") for (category, style) in zip(categories, styles)])[1:end-2] # remove last comma
     mkpath(output_path) # make the output path if it doesn't exist already
 
@@ -70,22 +70,13 @@ function make_pairwise_comparisons(filename, output_path, column_markers, row_ma
 end
 
 
-filename = "/Users/castrong/Desktop/Research/NeuralOptimization.jl/ResultProcessing/Results/results_time.csv"
-output_path = "/Users/castrong/Desktop/Research/NeuralOptimization.jl/ResultProcessing/Results/Plots/"
+filename = "/barrett/scratch/haozewu/Optimization/NeuralOptimization.jl/BenchmarkOutput/full_benchmarks_final/results.csv"
+output_path = "/barrett/scratch/haozewu/Optimization/NeuralOptimization.jl/BenchmarkOutput/ResultProcessing/Results/Plots/"
 
 
 column_lists = [
-                ["marabou_mip0.1sec", "MIPVerify_mip1sec"],
-                ["marabou_mip0.1sec", "MIPVerify_mip5sec"],
-                ["marabou_mip0.5sec", "MIPVerify_mip1sec"],
-                ["marabou_mip0.5sec", "MIPVerify_mip5sec"],
-                ["marabou_mip1sec", "MIPVerify_mip1sec"],
-                ["marabou_mip1sec", "MIPVerify_mip5sec"],
-                ["marabou_mip0.1sec", "marabou_mip0.5sec"],
-                ["marabou_mip0.1sec", "marabou_mip1sec"],
-                ["marabou_mip0.5sec", "marabou_mip1sec"],
-                ["MIPVerify_mip1sec", "MIPVerify_mip5sec"],
-                ]
+                ["MarabouOpt", "MIPVerify"]
+               ]
 
 ######################################################
 # Breakdown on different types of networks for output optimization
