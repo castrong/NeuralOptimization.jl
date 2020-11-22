@@ -16,7 +16,7 @@
     end
 
 	module test
-           ARGS = ["--environment_path", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/", "--optimizer", "MarabouBinarySearch_sbt=true_dividestrategy=ReLUViolation", "--network_file", "/Users/castrong/Downloads/mnist10x10.nnet", "--property_file", "/Users/castrong/Downloads/mnist_property_mininput_MNISTlabel_3_index_2__2.txt", "--result_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Results/binary_mininput.txt"]
+           ARGS = ["--environment_path", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/", "--optimizer", "LBFGS", "--network_file", "/Users/castrong/Downloads/ACASXU_experimental_v2a_1_9.nnet", "--property_file", "/Users/castrong/Downloads/acas_property_optimization_2.txt", "--result_file", "/Users/castrong/Desktop/Research/NeuralOptimization.jl/BenchmarkOutput/test_benchmark/Results/lbfgs_acas_nan.txt"]
            include("/Users/castrong/Desktop/Research/NeuralOptimization.jl/src/utils/BenchmarkUtils/RunQueryFromProperty.jl")
     end
 
